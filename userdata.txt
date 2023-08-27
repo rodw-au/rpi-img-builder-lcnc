@@ -1,0 +1,58 @@
+NAME="cnc"
+USERNAME="cnc"
+PASSWORD="cnc"
+ROOTPASSWD="0"
+### LINUX KERNEL
+VERSION="6.1.y"
+BUILD_VERSION="1"
+MENUCONFIG="1"
+GCC_VERSION="gcc-12"
+### COMPILER
+GCC="1"
+CCACHE="0"
+CLANG="0"
+### DISTRIBUTION
+DISTRO="debian"
+DISTRO_VERSION="bookworm"
+NETWORKMANAGER="1"
+### CUSTOM
+CUSTOM_DEFCONFIG="0"
+MYCONFIG="_defconfig"
+VERBOSE="0"
+DEVROOTFS="1"
+COMPRESS_IMG="0"
+USCRIPTS="0"
+USERACCT="0"
+USER_PKGS="htop libsensors-dev"
+### CLANG/LLVM
+CLANG_VERSION="clang-15"
+CLANG_LLVM="LLVM=-15 LLVM_IAS=1"
+LTO_CLANG_THIN="0"
+### COMPILER TUNING
+CORES=`nproc`
+CFLAGS=""
+### WHOAMI AND HOST
+KBUSER="$USER"
+KBHOST="raspberrypi"
+### LOCALES
+set_locales(){
+apt install -y locales
+export LANGUAGE=en_US.UTF-8
+export LANG=en_US.UTF-8
+export LC_ALL=C.UTF-8
+locale-gen en_US.UTF-8
+}
+### TIMEZONE
+set_timezone(){
+ln -snf /usr/share/zoneinfo/America/New_York /etc/localtime
+echo -n 'America/New_York' > /etc/timezone
+}
+### NAME SERVER
+NAMESERVER1="8.8.8.8"
+NAMESERVER2="8.8.4.4"
+### EXTRA WIRELESS
+RTL88XXAU="0"
+RTL88X2BU="0"
+RTL88XXCU="0"
+### DO NOT EDIT BELOW THIS LINE
+builder=5.4
