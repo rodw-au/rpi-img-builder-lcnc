@@ -21,7 +21,7 @@ git checkout 2.9
 cd ../debian
 ./configure no-docs
 cd ..
-dpkg-buildpackage -b -uc -j=auto
+dpkg-buildpackage -b -uc
 cd ..
 apt install -y ./linuxcnc-uspace_2.9.0~pre1_arm64.deb
 apt install -y ./linuxcnc-uspace-dev_2.9.0~pre1_arm64.deb

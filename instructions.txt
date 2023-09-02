@@ -1,0 +1,24 @@
+# make a development folder to keep the home folder tidy
+cd ~
+mkdir devel
+cd devel
+https://github.com/rodw-au/rpi-img-builder-lcnc
+cd rpi-img-builder-lcnc
+git checkout linuxcnc
+
+#set up the environment - First run only
+./install.sh
+make ccompile
+
+# Download the kernel fromn Raspberry but we want to go back to the matching commit
+# for the latest preempt_rt patch  which is Linux version 6.1.46
+# The Raspberry Pi kernel is advancing regularly merging with the kernel.org source
+
+make commit board=bcm2711
+Enter: 9ed4f05ba2e2bcd9065831674e97b2b1283e866d
+make rootfs board=bcm2711
+make image board=bcm2711
+
+# Before rebuild
+make purge
+

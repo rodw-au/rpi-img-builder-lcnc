@@ -44,8 +44,8 @@ locale-gen en_US.UTF-8
 }
 ### TIMEZONE
 set_timezone(){
-ln -snf /usr/share/zoneinfo/America/New_York /etc/localtime
-echo -n 'America/New_York' > /etc/timezone
+ln -snf /usr/share/zoneinfo/Australia/Brisbane /etc/localtime
+echo -n 'Australia/Brisbane' > /etc/timezone
 }
 ### NAME SERVER
 NAMESERVER1="8.8.8.8"
