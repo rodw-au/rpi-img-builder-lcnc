@@ -5,7 +5,6 @@ cd devel
 https://github.com/rodw-au/rpi-img-builder-lcnc
 cd rpi-img-builder-lcnc
 git checkout linuxcnc
-
 #set up the environment - First run only
 ./install.sh
 make ccompile
@@ -21,4 +20,8 @@ make image board=bcm2711
 
 # Before rebuild
 make purge
+
+#User name and password
+User: cnc
+Password: cnc
 
