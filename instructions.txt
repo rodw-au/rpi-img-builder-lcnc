@@ -14,7 +14,7 @@ make ccompile
 # The Raspberry Pi kernel is advancing regularly merging with the kernel.org source
 # The commit is now stored in userdata.txt
 
-make commit kernel board=bcm2711
+make commit board=bcm2711
 make rootfs board=bcm2711
 make image board=bcm2711
 
