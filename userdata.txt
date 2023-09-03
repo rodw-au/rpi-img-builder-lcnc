@@ -5,7 +5,7 @@ ROOTPASSWD="0"
 ### LINUX KERNEL
 VERSION="6.1.y"
 BUILD_VERSION="1"
-MENUCONFIG="1"
+MENUCONFIG="0"
 GCC_VERSION="gcc-12"
 ### COMPILER
 GCC="1"
@@ -16,14 +16,17 @@ DISTRO="debian"
 DISTRO_VERSION="bookworm"
 NETWORKMANAGER="1"
 ### CUSTOM
-CUSTOM_DEFCONFIG="0"
-MYCONFIG="_defconfig"
-VERBOSE="1"
+CUSTOM_DEFCONFIG="1"
+MYCONFIG="linuxcnc_defconfig"
+VERBOSE="0"
 DEVROOTFS="1"
 COMPRESS_IMG="0"
 USCRIPTS="1"
 USERACCT="0"
 USER_PKGS="htop libsensors-dev"
+### CUSTOM LINUX KERNEL
+ENABLE_COMMIT="1"
+COMMIT="9ed4f05ba2e2bcd9065831674e97b2b1283e866d"
 ### CLANG/LLVM
 CLANG_VERSION="clang-15"
 CLANG_LLVM="LLVM=-15 LLVM_IAS=1"
@@ -41,11 +44,11 @@ export LANGUAGE=en_US.UTF-8
 export LANG=en_US.UTF-8
 export LC_ALL=C.UTF-8
 locale-gen en_US.UTF-8
-}
 ### TIMEZONE
+}
 set_timezone(){
-ln -snf /usr/share/zoneinfo/Australia/Brisbane /etc/localtime
-echo -n 'Australia/Brisbane' > /etc/timezone
+ln -snf /usr/share/zoneinfo/Australia/Brisbane/etc/localtime
+echo -n 'AUstralia/Brisbane' > /etc/timezone
 }
 ### NAME SERVER
 NAMESERVER1="8.8.8.8"
@@ -55,4 +58,4 @@ RTL88XXAU="0"
 RTL88X2BU="0"
 RTL88XXCU="0"
 ### DO NOT EDIT BELOW THIS LINE
-builder=5.4
+builder=5.5

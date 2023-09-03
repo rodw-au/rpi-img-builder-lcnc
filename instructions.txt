@@ -12,9 +12,9 @@ make ccompile
 # Download the kernel fromn Raspberry but we want to go back to the matching commit
 # for the latest preempt_rt patch  which is Linux version 6.1.46
 # The Raspberry Pi kernel is advancing regularly merging with the kernel.org source
+# The commit is now stored in userdata.txt
 
-make commit board=bcm2711
-Enter: 9ed4f05ba2e2bcd9065831674e97b2b1283e866d
+make commit kernel board=bcm2711
 make rootfs board=bcm2711
 make image board=bcm2711
 
