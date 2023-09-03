@@ -2,7 +2,7 @@
 cd ~
 mkdir devel
 cd devel
-https://github.com/rodw-au/rpi-img-builder-lcnc
+git clone https://github.com/rodw-au/rpi-img-builder-lcnc
 cd rpi-img-builder-lcnc
 git checkout linuxcnc
 #set up the environment - First run only
