@@ -5,7 +5,6 @@ if [[ -f "board.txt" ]]; then
 	sed -i 's/net.ifnames=0/net.ifnames=0 processor.max_cstate=1 isolcpus=2,3/g' board.txt
 fi
 }
-
 run_function1 (){
 
   echo "run_function 1 completed"
