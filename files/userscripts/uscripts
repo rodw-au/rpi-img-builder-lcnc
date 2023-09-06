@@ -57,7 +57,7 @@ cp *.deb /home/cnc/linuxcnc-debs
 cd ..
 
 # Remove the build folders. Tmp folder gets overridden anyway)
-rm -r devel
+#rm -r devel
 
 # Finished!
 echo "All done installing linuxcnc!"

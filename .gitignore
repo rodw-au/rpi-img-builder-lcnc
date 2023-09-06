@@ -1,7 +1,10 @@
 *.img
+*.img.xz
 *.tar.xz
+*.sha256
 *.deb
 source/
+output/
 output/logs/
 p1/
 p2/
