@@ -13,7 +13,7 @@ if [[ `ls p2/tmp/devel/*.deb` ]]; then
 	rm -r /tmp/devel
 fi
 #remove sudo no password
-rm -f /p2/etc/sudoers.d/010_$(USERNAME)-nopasswd
+rm -f /p2/etc/sudoers.d/010_${USERNAME}-nopasswd
 echo "run_function 1 completed" 
 }
 
