@@ -7,7 +7,14 @@ fi
 }
 run_function1 (){
 
-  echo "run_function 1 completed"
+# Copy debs to output
+if [[ `ls p2/tmp/devel/*.deb` ]]; then
+	cp -fr p2/tmp/devel/*.deb output/${BOARD}/
+	rm -r /tmp/devel
+fi
+#remove sudo no password
+rm -f /p2/etc/sudoers.d/010_$(USERNAME)-nopasswd
+echo "run_function 1 completed" 
 }
 
 
@@ -17,8 +24,7 @@ echo "Starting run_function 2 - Install linuxcnc and xfce"
 #add isolcpus to config.txt
 #sed -i "$ a processor.max_cstate=1\nisolcpus=2,3" p2/boot/broadcom/config.txt
 
-#remove sudo no password
-sudo rm -f /etc/sudoers.d/010_*-nopasswd.
+
 # Intall xfce
 apt install -y xfce4 xfce4-terminal xfce4-power-manager
 apt install -y geany firefox-esr konsole

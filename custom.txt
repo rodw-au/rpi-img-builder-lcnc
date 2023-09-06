@@ -1,15 +1,15 @@
 # Default Image Size: 3072MB
-IMGSIZE="8192MB"
+IMGSIZE="3072MB"
 
 # Root Filesystem Types: ext4 btrfs xfs
 FSTYPE="ext4"
 
 # Hostname
-HOSTNAME="linuxcnc-pi"
+HOSTNAME="raspberrypi"
 
 # Branding: true false
 BRANDING="false"
 MOTD="Raspberry Pi"
 
 ### DO NOT EDIT BELOW THIS LINE
-# CUSTOM=5.5
+# CUSTOM=5.6
