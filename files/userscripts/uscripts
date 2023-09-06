@@ -44,6 +44,10 @@ cd ..
 # Install the Linuxcnc Debs
 apt install -y ./linuxcnc-uspace_2.9.0~pre1_arm64.deb
 apt install -y ./linuxcnc-uspace-dev_2.9.0~pre1_arm64.deb
+
+# Copy the debs to the users home folder
+mkdir -p /home/cnc/linuxcnc-debs
+cp *.deb /home/cnc/linuxcnc-debs
 cd ..
 
 # Remove the build folders. Tmp folder gets overridden anyway)
