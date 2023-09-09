@@ -10,11 +10,6 @@ run_function1 (){
 # move sudo no password
 rm -f /p2/etc/sudoers.d/010_${USERNAME}-nopasswd
 echo "run_function 1 completed" 
-if [[ `ls files/linuxcnc-dev/scripts/rip-environment` ]]; then
-    mkdir -p p2/tmp/devel
-	mv files/linuxcnc-dev p2/tmp/devel/linuxcnc-dev
-fi
-
 }
 
 
@@ -100,9 +95,9 @@ echo "Entering run_function3"
 if [[ `ls p2/tmp/devel/*.deb` ]]; then
     mkdir -p output/${BOARD}/linuxcnc
 	cp -fr p2/tmp/devel/*.deb output/${BOARD}/linuxcnc
-	mkdir -p files/linuxcnc-dev
-	mv p2/tmp/devel/linuxcnc-dev files/linuxcnc-dev
-	rm -r p2/tmp/devel
+	#copy the linuxcnc-dev source folder out of the chroot
+	#rsync -azvh p2/tmp/devel/linuxcnc-dev files
+	rm -rf p2/tmp/devel
 fi
 #re
 }
