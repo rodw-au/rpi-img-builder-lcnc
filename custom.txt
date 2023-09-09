@@ -1,5 +1,5 @@
 # Default Image Size: 3072MB
-IMGSIZE="12288MB"
+IMGSIZE="8192MB"
 
 # Root Filesystem Types: ext4 btrfs xfs
 FSTYPE="ext4"
