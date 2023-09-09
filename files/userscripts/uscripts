@@ -7,15 +7,17 @@ fi
 }
 run_function1 (){
 
-# Copy debs to output
-if [[ `ls p2/tmp/devel/*.deb` ]]; then
-	cp -fr p2/tmp/devel/*.deb output/${BOARD}/
-	rm -r /tmp/devel
-fi
-#remove sudo no password
+# move sudo no password
 rm -f /p2/etc/sudoers.d/010_${USERNAME}-nopasswd
 echo "run_function 1 completed" 
+if [[ `ls files/linuxcnc-dev/scripts/rip-environment` ]]; then
+    mkdir -p p2/tmp/devel
+	mv files/linuxcnc-dev p2/tmp/devel/linuxcnc-dev
+fi
+
 }
+
+
 
 
 run_function2 (){
@@ -26,39 +28,80 @@ echo "Starting run_function 2 - Install linuxcnc and xfce"
 
 
 # Intall xfce
-apt install -y xfce4 xfce4-terminal xfce4-power-manager
-apt install -y geany firefox-esr konsole
+#apt install -y xfce4 xfce4-terminal xfce4-power-manager geany firefox-esr konsole
 
-#install linuxcnc repositories
+#install linuxcnc dependencies
 apt install -y dh-python libudev-dev docbook-xsl asciidoc ghostscript imagemagick asciidoc-dblatex bwidget intltool libboost-python-dev libepoxy-dev libgl1-mesa-dev libglu1-mesa-dev libgtk-3-dev libmodbus-dev libgpiod-dev libeditreadline-dev libusb-1.0-0-dev libxmu-dev netcat-traditional  netcat-openbsd po4a python3-dev python3-tk python3-xlib tcl8.6-dev tclx tk8.6-dev yapps2 libgtk2.0-dev
+
+#install linuxcnc runtime dependencies
+apt install -y iptables mesa-utils python3-numpy python3-cairo python3-gi-cairo python3-opengl python3-configobj libgtksourceview-3.0-dev tcl-tclreadline python3-pyqt5 python3-pyqt5.qsci python3-pyqt5.qtsvg python3-pyqt5.qtopengl python3-opencv python3-dbus python3-espeak python3-dbus.mainloop.pyqt5 espeak-ng pyqt5-dev-tools gstreamer1.0-tools espeak python3-poppler-qt5 python3-pyqt5.qtwebengine  python3-pyqt5.qtwebkit xvfb python3-serial
 
 #Linuxcnc Docs - Commented out for the Pi to save space
 #apt install -y dvipng fonts-dejavu graphviz groff inkscape python3-lxml source-highlight texlive-font-utils texlive-lang-cyrillic texlive-lang-european texlive-lang-french texlive-lang-german texlive-lang-polish texlive-lang-spanish w3c-linkchecker
 
-# Clone and build Linuxcnc debs
-mkdir -p /tmp/devel/
-cd /tmp/devel/
-git clone https://github.com/LinuxCNC/linuxcnc.git linuxcnc-dev
-cd linuxcnc-dev/src
-git checkout 2.9
-cd ../debian
-./configure no-docs
-cd ..
-dpkg-buildpackage -b -uc
-cd ..
-
 # Install the Linuxcnc Debs
-apt install -y ./linuxcnc-uspace_2.9.0~pre1_arm64.deb
-apt install -y ./linuxcnc-uspace-dev_2.9.0~pre1_arm64.deb
+# if the linuxcnc folder exists
+if [[ `ls /tmp/devel/linuxcnc-dev/scripts/rip-environment` ]]; then
+	# move to linuxcnc-dev/src folder
+	echo "linuxcnc-dev  found, executing git pull"
+	cd /tmp/devel/linuxcnc-dev/src
+	git pull
+	# return to linuxcnc-dev folder
+	cd  ..
+else
+	# Linuxcnc does not exist so clone it
+	mkdir -p /tmp/devel/
+	cd /tmp/devel/
+	echo "linuxcnc-dev not found, executing git clone"
+	git clone https://github.com/LinuxCNC/linuxcnc.git linuxcnc-dev
+	cd linuxcnc-dev/src
+	git checkout 2.9
+	# move to linuxcnc-dev/debian folder
+	cd ../debian
+	./configure no-docs
+	cd ..
+fi
+# Should now be in linuxcnc-dev folder
+echo "Building linuxcnc with dpkg-buildpackage " 
+dpkg-buildpackage -b -uc -j$(nproc)
 
-# Copy the debs to the users home folder
-mkdir -p /home/cnc/linuxcnc-debs
-cp *.deb /home/cnc/linuxcnc-debs
+echo "installing linuxcnc debs" 
 cd ..
+# now in devel folder
+FILES="./*.deb"
+for f in $FILES
+do
+  if [[  $f == *dbgsym*.deb ]] 
+  then
+    continue      # Skip installing this deb file
+  fi
+  if [[  $f == *dev*.deb ]] 
+  then
+    g=$f          # save linuxcnc-uspace-dev file name and install it last
+    continue      
+  fi   
+  echo "Installing $f"
+  dpkg -i "$f"
+done
+echo "Installing $f"
+dpkg -i "$g"
 
-# Remove the build folders. Tmp folder gets overridden anyway)
-#rm -r devel
+#dpkg -i ./linuxcnc-uspace_2.9.0~pre1_arm64.deb
+#dpkg -i ./linuxcnc-uspace-dev_2.9.0~pre1_arm64.deb
 
 # Finished!
-echo "All done installing linuxcnc!"
+echo "Stage 2 All done installing linuxcnc!"
+}
+
+run_function3 (){
+echo "Entering run_function3"	
+# Copy debs to output
+if [[ `ls p2/tmp/devel/*.deb` ]]; then
+    mkdir -p output/${BOARD}/linuxcnc
+	cp -fr p2/tmp/devel/*.deb output/${BOARD}/linuxcnc
+	mkdir -p files/linuxcnc-dev
+	mv p2/tmp/devel/linuxcnc-dev files/linuxcnc-dev
+	rm -r p2/tmp/devel
+fi
+#re
 }

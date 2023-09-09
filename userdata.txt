@@ -5,7 +5,7 @@ ROOTPASSWD="0"
 ### LINUX KERNEL
 VERSION="6.1.y"
 BUILD_VERSION="1"
-MENUCONFIG="1"
+MENUCONFIG="0"
 GCC_VERSION="gcc-12"
 ### COMPILER
 CCACHE="1"
@@ -22,7 +22,7 @@ DEVROOTFS="1"
 COMPRESS_IMG="1"
 USCRIPTS="1"
 USERACCT="1"
-USER_PKGS="htop libsensors-dev"
+USER_PKGS="htop libsensors-dev xfce4 xfce4-terminal xfce4-power-manager geany firefox-esr konsole"
 ### CUSTOM LINUX KERNEL
 ENABLE_COMMIT="1"
 COMMIT="9ed4f05ba2e2bcd9065831674e97b2b1283e866d"
