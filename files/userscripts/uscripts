@@ -51,10 +51,11 @@ else
 	echo "linuxcnc-dev not found, executing git clone"
 	git clone https://github.com/LinuxCNC/linuxcnc.git linuxcnc-dev
 	cd linuxcnc-dev/src
-	git checkout 2.9
+	#git checkout 2.9
 	# move to linuxcnc-dev/debian folder
 	cd ../debian
-	./configure no-docs
+	#./configure no-docs	
+	./configure
 	cd ..
 fi
 # Should now be in linuxcnc-dev folder
