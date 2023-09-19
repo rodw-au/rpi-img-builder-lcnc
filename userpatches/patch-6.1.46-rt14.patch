@@ -921,6 +921,63 @@ index fc4a84628985..fc937697fe14 100644
  		start_timeslice(engine);
  	}
  
+diff --git a/drivers/gpu/drm/i915/gt/intel_reset.c b/drivers/gpu/drm/i915/gt/intel_reset.c
+index 10b930eaa8cb..6108a449cd19 100644
+--- a/drivers/gpu/drm/i915/gt/intel_reset.c
++++ b/drivers/gpu/drm/i915/gt/intel_reset.c
+@@ -174,13 +174,13 @@ static int i915_do_reset(struct intel_gt *gt,
+ 	/* Assert reset for at least 20 usec, and wait for acknowledgement. */
+ 	pci_write_config_byte(pdev, I915_GDRST, GRDOM_RESET_ENABLE);
+ 	udelay(50);
+-	err = wait_for_atomic(i915_in_reset(pdev), 50);
++	err = _wait_for_atomic(i915_in_reset(pdev), 50, 0);
+ 
+ 	/* Clear the reset request. */
+ 	pci_write_config_byte(pdev, I915_GDRST, 0);
+ 	udelay(50);
+ 	if (!err)
+-		err = wait_for_atomic(!i915_in_reset(pdev), 50);
++		err = _wait_for_atomic(!i915_in_reset(pdev), 50, 0);
+ 
+ 	return err;
+ }
+@@ -200,7 +200,7 @@ static int g33_do_reset(struct intel_gt *gt,
+ 	struct pci_dev *pdev = to_pci_dev(gt->i915->drm.dev);
+ 
+ 	pci_write_config_byte(pdev, I915_GDRST, GRDOM_RESET_ENABLE);
+-	return wait_for_atomic(g4x_reset_complete(pdev), 50);
++	return _wait_for_atomic(g4x_reset_complete(pdev), 50, 0);
+ }
+ 
+ static int g4x_do_reset(struct intel_gt *gt,
+@@ -217,7 +217,7 @@ static int g4x_do_reset(struct intel_gt *gt,
+ 
+ 	pci_write_config_byte(pdev, I915_GDRST,
+ 			      GRDOM_MEDIA | GRDOM_RESET_ENABLE);
+-	ret =  wait_for_atomic(g4x_reset_complete(pdev), 50);
++	ret =  _wait_for_atomic(g4x_reset_complete(pdev), 50, 0);
+ 	if (ret) {
+ 		GT_TRACE(gt, "Wait for media reset failed\n");
+ 		goto out;
+@@ -225,7 +225,7 @@ static int g4x_do_reset(struct intel_gt *gt,
+ 
+ 	pci_write_config_byte(pdev, I915_GDRST,
+ 			      GRDOM_RENDER | GRDOM_RESET_ENABLE);
+-	ret =  wait_for_atomic(g4x_reset_complete(pdev), 50);
++	ret =  _wait_for_atomic(g4x_reset_complete(pdev), 50, 0);
+ 	if (ret) {
+ 		GT_TRACE(gt, "Wait for render reset failed\n");
+ 		goto out;
+@@ -718,9 +718,7 @@ int __intel_gt_reset(struct intel_gt *gt, intel_engine_mask_t engine_mask)
+ 	intel_uncore_forcewake_get(gt->uncore, FORCEWAKE_ALL);
+ 	for (retry = 0; ret == -ETIMEDOUT && retry < retries; retry++) {
+ 		GT_TRACE(gt, "engine_mask=%x\n", engine_mask);
+-		preempt_disable();
+ 		ret = reset(gt, engine_mask, retry);
+-		preempt_enable();
+ 	}
+ 	intel_uncore_forcewake_put(gt->uncore, FORCEWAKE_ALL);
+ 
 diff --git a/drivers/gpu/drm/i915/i915_irq.c b/drivers/gpu/drm/i915/i915_irq.c
 index f93ffa6626a5..6e9d033cf808 100644
 --- a/drivers/gpu/drm/i915/i915_irq.c
@@ -4189,11 +4246,90 @@ index a92bce40b04b..bf82980f569d 100644
  DECLARE_PER_CPU(struct task_struct *, ksoftirqd);
  
  static inline struct task_struct *this_cpu_ksoftirqd(void)
+diff --git a/include/linux/io-mapping.h b/include/linux/io-mapping.h
+index 66a774d2710e..b08532b8fba7 100644
+--- a/include/linux/io-mapping.h
++++ b/include/linux/io-mapping.h
+@@ -69,7 +69,10 @@ io_mapping_map_atomic_wc(struct io_mapping *mapping,
+ 
+ 	BUG_ON(offset >= mapping->size);
+ 	phys_addr = mapping->base + offset;
+-	preempt_disable();
++	if (!IS_ENABLED(CONFIG_PREEMPT_RT))
++		preempt_disable();
++	else
++		migrate_disable();
+ 	pagefault_disable();
+ 	return __iomap_local_pfn_prot(PHYS_PFN(phys_addr), mapping->prot);
+ }
+@@ -79,7 +82,10 @@ io_mapping_unmap_atomic(void __iomem *vaddr)
+ {
+ 	kunmap_local_indexed((void __force *)vaddr);
+ 	pagefault_enable();
+-	preempt_enable();
++	if (!IS_ENABLED(CONFIG_PREEMPT_RT))
++		preempt_enable();
++	else
++		migrate_enable();
+ }
+ 
+ static inline void __iomem *
+@@ -162,7 +168,10 @@ static inline void __iomem *
+ io_mapping_map_atomic_wc(struct io_mapping *mapping,
+ 			 unsigned long offset)
+ {
+-	preempt_disable();
++	if (!IS_ENABLED(CONFIG_PREEMPT_RT))
++		preempt_disable();
++	else
++		migrate_disable();
+ 	pagefault_disable();
+ 	return io_mapping_map_wc(mapping, offset, PAGE_SIZE);
+ }
+@@ -172,7 +181,10 @@ io_mapping_unmap_atomic(void __iomem *vaddr)
+ {
+ 	io_mapping_unmap(vaddr);
+ 	pagefault_enable();
+-	preempt_enable();
++	if (!IS_ENABLED(CONFIG_PREEMPT_RT))
++		preempt_enable();
++	else
++		migrate_enable();
+ }
+ 
+ static inline void __iomem *
 diff --git a/include/linux/lockdep.h b/include/linux/lockdep.h
-index 1f1099dac3f0..1023f349af71 100644
+index 1f1099dac3f0..a3329fb49b33 100644
 --- a/include/linux/lockdep.h
 +++ b/include/linux/lockdep.h
-@@ -435,7 +435,6 @@ enum xhlock_context_t {
+@@ -339,6 +339,16 @@ extern void lock_unpin_lock(struct lockdep_map *lock, struct pin_cookie);
+ #define lockdep_repin_lock(l,c)	lock_repin_lock(&(l)->dep_map, (c))
+ #define lockdep_unpin_lock(l,c)	lock_unpin_lock(&(l)->dep_map, (c))
+ 
++/*
++ * Must use lock_map_aquire_try() with override maps to avoid
++ * lockdep thinking they participate in the block chain.
++ */
++#define DEFINE_WAIT_OVERRIDE_MAP(_name, _wait_type)	\
++	struct lockdep_map _name = {			\
++		.name = #_name "-wait-type-override",	\
++		.wait_type_inner = _wait_type,		\
++		.lock_type = LD_LOCK_WAIT_OVERRIDE, }
++
+ #else /* !CONFIG_LOCKDEP */
+ 
+ static inline void lockdep_init_task(struct task_struct *task)
+@@ -427,6 +437,9 @@ extern int lockdep_is_held(const void *);
+ #define lockdep_repin_lock(l, c)		do { (void)(l); (void)(c); } while (0)
+ #define lockdep_unpin_lock(l, c)		do { (void)(l); (void)(c); } while (0)
+ 
++#define DEFINE_WAIT_OVERRIDE_MAP(_name, _wait_type)	\
++	struct lockdep_map __maybe_unused _name = {}
++
+ #endif /* !LOCKDEP */
+ 
+ enum xhlock_context_t {
+@@ -435,7 +448,6 @@ enum xhlock_context_t {
  	XHLOCK_CTX_NR,
  };
  
@@ -4201,6 +4337,26 @@ index 1f1099dac3f0..1023f349af71 100644
  /*
   * To initialize a lockdep_map statically use this macro.
   * Note that _name must not be NULL.
+@@ -552,6 +564,7 @@ do {									\
+ #define rwsem_release(l, i)			lock_release(l, i)
+ 
+ #define lock_map_acquire(l)			lock_acquire_exclusive(l, 0, 0, NULL, _THIS_IP_)
++#define lock_map_acquire_try(l)			lock_acquire_exclusive(l, 0, 1, NULL, _THIS_IP_)
+ #define lock_map_acquire_read(l)		lock_acquire_shared_recursive(l, 0, 0, NULL, _THIS_IP_)
+ #define lock_map_acquire_tryread(l)		lock_acquire_shared_recursive(l, 0, 1, NULL, _THIS_IP_)
+ #define lock_map_release(l)			lock_release(l, _THIS_IP_)
+diff --git a/include/linux/lockdep_types.h b/include/linux/lockdep_types.h
+index d22430840b53..59f4fb1626ea 100644
+--- a/include/linux/lockdep_types.h
++++ b/include/linux/lockdep_types.h
+@@ -33,6 +33,7 @@ enum lockdep_wait_type {
+ enum lockdep_lock_type {
+ 	LD_LOCK_NORMAL = 0,	/* normal, catch all */
+ 	LD_LOCK_PERCPU,		/* percpu */
++	LD_LOCK_WAIT_OVERRIDE,	/* annotation */
+ 	LD_LOCK_MAX,
+ };
+ 
 diff --git a/include/linux/netdevice.h b/include/linux/netdevice.h
 index 5a04fbf72476..98eb63c317f7 100644
 --- a/include/linux/netdevice.h
@@ -4405,6 +4561,86 @@ index ffb6eb55cd13..a4c1e3638cb1 100644
  /*
   * cond_resched() and cond_resched_lock(): latency reduction via
   * explicit rescheduling in places that are safe. The return
+diff --git a/include/linux/sched/signal.h b/include/linux/sched/signal.h
+index 20099268fa25..669e8cff40c7 100644
+--- a/include/linux/sched/signal.h
++++ b/include/linux/sched/signal.h
+@@ -135,7 +135,7 @@ struct signal_struct {
+ #ifdef CONFIG_POSIX_TIMERS
+ 
+ 	/* POSIX.1b Interval Timers */
+-	int			posix_timer_id;
++	unsigned int		next_posix_timer_id;
+ 	struct list_head	posix_timers;
+ 
+ 	/* ITIMER_REAL timer for the process */
+diff --git a/include/linux/sched/task.h b/include/linux/sched/task.h
+index 357e0068497c..08ddeb0dcfc7 100644
+--- a/include/linux/sched/task.h
++++ b/include/linux/sched/task.h
+@@ -112,11 +112,47 @@ static inline struct task_struct *get_task_struct(struct task_struct *t)
+ }
+ 
+ extern void __put_task_struct(struct task_struct *t);
++extern void __put_task_struct_rcu_cb(struct rcu_head *rhp);
+ 
+ static inline void put_task_struct(struct task_struct *t)
+ {
+-	if (refcount_dec_and_test(&t->usage))
++	if (!refcount_dec_and_test(&t->usage))
++		return;
++
++	/*
++	 * In !RT, it is always safe to call __put_task_struct().
++	 * Under RT, we can only call it in preemptible context.
++	 */
++	if (!IS_ENABLED(CONFIG_PREEMPT_RT) || preemptible()) {
++		static DEFINE_WAIT_OVERRIDE_MAP(put_task_map, LD_WAIT_SLEEP);
++
++		lock_map_acquire_try(&put_task_map);
+ 		__put_task_struct(t);
++		lock_map_release(&put_task_map);
++		return;
++	}
++
++	/*
++	 * under PREEMPT_RT, we can't call put_task_struct
++	 * in atomic context because it will indirectly
++	 * acquire sleeping locks.
++	 *
++	 * call_rcu() will schedule delayed_put_task_struct_rcu()
++	 * to be called in process context.
++	 *
++	 * __put_task_struct() is called when
++	 * refcount_dec_and_test(&t->usage) succeeds.
++	 *
++	 * This means that it can't "conflict" with
++	 * put_task_struct_rcu_user() which abuses ->rcu the same
++	 * way; rcu_users has a reference so task->usage can't be
++	 * zero after rcu_users 1 -> 0 transition.
++	 *
++	 * delayed_free_task() also uses ->rcu, but it is only called
++	 * when it fails to fork a process. Therefore, there is no
++	 * way it can conflict with put_task_struct().
++	 */
++	call_rcu(&t->rcu, __put_task_struct_rcu_cb);
+ }
+ 
+ static inline void put_task_struct_many(struct task_struct *t, int nr)
+diff --git a/include/linux/seqlock.h b/include/linux/seqlock.h
+index 3926e9027947..d778af83c8f3 100644
+--- a/include/linux/seqlock.h
++++ b/include/linux/seqlock.h
+@@ -512,8 +512,8 @@ do {									\
+ 
+ static inline void do_write_seqcount_begin_nested(seqcount_t *s, int subclass)
+ {
+-	do_raw_write_seqcount_begin(s);
+ 	seqcount_acquire(&s->dep_map, subclass, 0, _RET_IP_);
++	do_raw_write_seqcount_begin(s);
+ }
+ 
+ /**
 diff --git a/include/linux/serial_8250.h b/include/linux/serial_8250.h
 index 79b328861c5f..35f44352e641 100644
 --- a/include/linux/serial_8250.h
@@ -4549,7 +4785,7 @@ index c2f1fd95a821..260c08efeb48 100644
  	bool
  
 diff --git a/kernel/bpf/syscall.c b/kernel/bpf/syscall.c
-index 0c44a716f0a2..87bb16f73094 100644
+index 0c44a716f0a2..91ce158cbd5f 100644
 --- a/kernel/bpf/syscall.c
 +++ b/kernel/bpf/syscall.c
 @@ -2115,11 +2115,11 @@ static void bpf_prog_get_stats(const struct bpf_prog *prog,
@@ -4566,6 +4802,83 @@ index 0c44a716f0a2..87bb16f73094 100644
  		nsecs += tnsecs;
  		cnt += tcnt;
  		misses += tmisses;
+@@ -2732,28 +2732,31 @@ static void bpf_link_put_deferred(struct work_struct *work)
+ 	bpf_link_free(link);
+ }
+ 
+-/* bpf_link_put can be called from atomic context, but ensures that resources
+- * are freed from process context
++/* bpf_link_put might be called from atomic context. It needs to be called
++ * from sleepable context in order to acquire sleeping locks during the process.
+  */
+ void bpf_link_put(struct bpf_link *link)
+ {
+ 	if (!atomic64_dec_and_test(&link->refcnt))
+ 		return;
+ 
+-	if (in_atomic()) {
+-		INIT_WORK(&link->work, bpf_link_put_deferred);
+-		schedule_work(&link->work);
+-	} else {
+-		bpf_link_free(link);
+-	}
++	INIT_WORK(&link->work, bpf_link_put_deferred);
++	schedule_work(&link->work);
+ }
+ EXPORT_SYMBOL(bpf_link_put);
+ 
++static void bpf_link_put_direct(struct bpf_link *link)
++{
++	if (!atomic64_dec_and_test(&link->refcnt))
++		return;
++	bpf_link_free(link);
++}
++
+ static int bpf_link_release(struct inode *inode, struct file *filp)
+ {
+ 	struct bpf_link *link = filp->private_data;
+ 
+-	bpf_link_put(link);
++	bpf_link_put_direct(link);
+ 	return 0;
+ }
+ 
+@@ -4674,7 +4677,7 @@ static int link_update(union bpf_attr *attr)
+ 	if (ret)
+ 		bpf_prog_put(new_prog);
+ out_put_link:
+-	bpf_link_put(link);
++	bpf_link_put_direct(link);
+ 	return ret;
+ }
+ 
+@@ -4697,7 +4700,7 @@ static int link_detach(union bpf_attr *attr)
+ 	else
+ 		ret = -EOPNOTSUPP;
+ 
+-	bpf_link_put(link);
++	bpf_link_put_direct(link);
+ 	return ret;
+ }
+ 
+@@ -4767,7 +4770,7 @@ static int bpf_link_get_fd_by_id(const union bpf_attr *attr)
+ 
+ 	fd = bpf_link_new_fd(link);
+ 	if (fd < 0)
+-		bpf_link_put(link);
++		bpf_link_put_direct(link);
+ 
+ 	return fd;
+ }
+@@ -4844,7 +4847,7 @@ static int bpf_iter_create(union bpf_attr *attr)
+ 		return PTR_ERR(link);
+ 
+ 	err = bpf_iter_new_fd(link);
+-	bpf_link_put(link);
++	bpf_link_put_direct(link);
+ 
+ 	return err;
+ }
 diff --git a/kernel/entry/common.c b/kernel/entry/common.c
 index be61332c66b5..c6301e520d47 100644
 --- a/kernel/entry/common.c
@@ -4588,6 +4901,25 @@ index be61332c66b5..c6301e520d47 100644
  			preempt_schedule_irq();
  	}
  }
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 41950ff90aa3..85617928041c 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -852,6 +852,14 @@ void __put_task_struct(struct task_struct *tsk)
+ }
+ EXPORT_SYMBOL_GPL(__put_task_struct);
+ 
++void __put_task_struct_rcu_cb(struct rcu_head *rhp)
++{
++	struct task_struct *task = container_of(rhp, struct task_struct, rcu);
++
++	__put_task_struct(task);
++}
++EXPORT_SYMBOL_GPL(__put_task_struct_rcu_cb);
++
+ void __init __weak arch_task_cache_init(void) { }
+ 
+ /*
 diff --git a/kernel/hung_task.c b/kernel/hung_task.c
 index c71889f3f3fc..e2d2344cb9f4 100644
 --- a/kernel/hung_task.c
@@ -4659,6 +4991,88 @@ index 65dba9076f31..ab18048e2186 100644
  #endif
  	NULL
  };
+diff --git a/kernel/locking/lockdep.c b/kernel/locking/lockdep.c
+index 50d4863974e7..62ef295e07e6 100644
+--- a/kernel/locking/lockdep.c
++++ b/kernel/locking/lockdep.c
+@@ -2253,6 +2253,9 @@ static inline bool usage_match(struct lock_list *entry, void *mask)
+ 
+ static inline bool usage_skip(struct lock_list *entry, void *mask)
+ {
++	if (entry->class->lock_type == LD_LOCK_NORMAL)
++		return false;
++
+ 	/*
+ 	 * Skip local_lock() for irq inversion detection.
+ 	 *
+@@ -2279,14 +2282,16 @@ static inline bool usage_skip(struct lock_list *entry, void *mask)
+ 	 * As a result, we will skip local_lock(), when we search for irq
+ 	 * inversion bugs.
+ 	 */
+-	if (entry->class->lock_type == LD_LOCK_PERCPU) {
+-		if (DEBUG_LOCKS_WARN_ON(entry->class->wait_type_inner < LD_WAIT_CONFIG))
+-			return false;
++	if (entry->class->lock_type == LD_LOCK_PERCPU &&
++	    DEBUG_LOCKS_WARN_ON(entry->class->wait_type_inner < LD_WAIT_CONFIG))
++		return false;
+ 
+-		return true;
+-	}
++	/*
++	 * Skip WAIT_OVERRIDE for irq inversion detection -- it's not actually
++	 * a lock and only used to override the wait_type.
++	 */
+ 
+-	return false;
++	return true;
+ }
+ 
+ /*
+@@ -4752,7 +4757,8 @@ static int check_wait_context(struct task_struct *curr, struct held_lock *next)
+ 
+ 	for (; depth < curr->lockdep_depth; depth++) {
+ 		struct held_lock *prev = curr->held_locks + depth;
+-		u8 prev_inner = hlock_class(prev)->wait_type_inner;
++		struct lock_class *class = hlock_class(prev);
++		u8 prev_inner = class->wait_type_inner;
+ 
+ 		if (prev_inner) {
+ 			/*
+@@ -4762,6 +4768,14 @@ static int check_wait_context(struct task_struct *curr, struct held_lock *next)
+ 			 * Also due to trylocks.
+ 			 */
+ 			curr_inner = min(curr_inner, prev_inner);
++
++			/*
++			 * Allow override for annotations -- this is typically
++			 * only valid/needed for code that only exists when
++			 * CONFIG_PREEMPT_RT=n.
++			 */
++			if (unlikely(class->lock_type == LD_LOCK_WAIT_OVERRIDE))
++				curr_inner = prev_inner;
+ 		}
+ 	}
+ 
+diff --git a/kernel/locking/rwbase_rt.c b/kernel/locking/rwbase_rt.c
+index c201aadb9301..25ec0239477c 100644
+--- a/kernel/locking/rwbase_rt.c
++++ b/kernel/locking/rwbase_rt.c
+@@ -72,15 +72,6 @@ static int __sched __rwbase_read_lock(struct rwbase_rt *rwb,
+ 	int ret;
+ 
+ 	raw_spin_lock_irq(&rtm->wait_lock);
+-	/*
+-	 * Allow readers, as long as the writer has not completely
+-	 * acquired the semaphore for write.
+-	 */
+-	if (atomic_read(&rwb->readers) != WRITER_BIAS) {
+-		atomic_inc(&rwb->readers);
+-		raw_spin_unlock_irq(&rtm->wait_lock);
+-		return 0;
+-	}
+ 
+ 	/*
+ 	 * Call into the slow lock path with the rtmutex->wait_lock
 diff --git a/kernel/panic.c b/kernel/panic.c
 index ca5452afb456..fb23d6ed7a64 100644
 --- a/kernel/panic.c
@@ -6519,10 +6933,60 @@ index 5d45f5da2b36..58e919c7c936 100644
  	cgroup_leave_frozen(true);
  
 diff --git a/kernel/softirq.c b/kernel/softirq.c
-index c8a6913c067d..82f3e68fbe22 100644
+index c8a6913c067d..af9e879bbbf7 100644
 --- a/kernel/softirq.c
 +++ b/kernel/softirq.c
-@@ -637,6 +637,24 @@ static inline void tick_irq_exit(void)
+@@ -80,21 +80,6 @@ static void wakeup_softirqd(void)
+ 		wake_up_process(tsk);
+ }
+ 
+-/*
+- * If ksoftirqd is scheduled, we do not want to process pending softirqs
+- * right now. Let ksoftirqd handle this at its own rate, to get fairness,
+- * unless we're doing some of the synchronous softirqs.
+- */
+-#define SOFTIRQ_NOW_MASK ((1 << HI_SOFTIRQ) | (1 << TASKLET_SOFTIRQ))
+-static bool ksoftirqd_running(unsigned long pending)
+-{
+-	struct task_struct *tsk = __this_cpu_read(ksoftirqd);
+-
+-	if (pending & SOFTIRQ_NOW_MASK)
+-		return false;
+-	return tsk && task_is_running(tsk) && !__kthread_should_park(tsk);
+-}
+-
+ #ifdef CONFIG_TRACE_IRQFLAGS
+ DEFINE_PER_CPU(int, hardirqs_enabled);
+ DEFINE_PER_CPU(int, hardirq_context);
+@@ -236,7 +221,7 @@ void __local_bh_enable_ip(unsigned long ip, unsigned int cnt)
+ 		goto out;
+ 
+ 	pending = local_softirq_pending();
+-	if (!pending || ksoftirqd_running(pending))
++	if (!pending)
+ 		goto out;
+ 
+ 	/*
+@@ -432,9 +417,6 @@ static inline bool should_wake_ksoftirqd(void)
+ 
+ static inline void invoke_softirq(void)
+ {
+-	if (ksoftirqd_running(local_softirq_pending()))
+-		return;
+-
+ 	if (!force_irqthreads() || !__this_cpu_read(ksoftirqd)) {
+ #ifdef CONFIG_HAVE_IRQ_EXIT_ON_IRQ_STACK
+ 		/*
+@@ -468,7 +450,7 @@ asmlinkage __visible void do_softirq(void)
+ 
+ 	pending = local_softirq_pending();
+ 
+-	if (pending && !ksoftirqd_running(pending))
++	if (pending)
+ 		do_softirq_own_stack();
+ 
+ 	local_irq_restore(flags);
+@@ -637,6 +619,24 @@ static inline void tick_irq_exit(void)
  #endif
  }
  
@@ -6547,7 +7011,7 @@ index c8a6913c067d..82f3e68fbe22 100644
  static inline void __irq_exit_rcu(void)
  {
  #ifndef __ARCH_IRQ_EXIT_IRQS_DISABLED
-@@ -649,6 +667,10 @@ static inline void __irq_exit_rcu(void)
+@@ -649,6 +649,10 @@ static inline void __irq_exit_rcu(void)
  	if (!in_interrupt() && local_softirq_pending())
  		invoke_softirq();
  
@@ -6558,7 +7022,7 @@ index c8a6913c067d..82f3e68fbe22 100644
  	tick_irq_exit();
  }
  
-@@ -976,12 +998,70 @@ static struct smp_hotplug_thread softirq_threads = {
+@@ -976,12 +980,70 @@ static struct smp_hotplug_thread softirq_threads = {
  	.thread_comm		= "ksoftirqd/%u",
  };
  
@@ -6652,6 +7116,54 @@ index e4f0e3b0c4f4..9e2cfba065de 100644
  	}
  
  	__hrtimer_run_queues(cpu_base, now, flags, HRTIMER_ACTIVE_HARD);
+diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
+index ed3c4a954398..2d6cf93ca370 100644
+--- a/kernel/time/posix-timers.c
++++ b/kernel/time/posix-timers.c
+@@ -140,25 +140,30 @@ static struct k_itimer *posix_timer_by_id(timer_t id)
+ static int posix_timer_add(struct k_itimer *timer)
+ {
+ 	struct signal_struct *sig = current->signal;
+-	int first_free_id = sig->posix_timer_id;
+ 	struct hlist_head *head;
+-	int ret = -ENOENT;
++	unsigned int cnt, id;
+ 
+-	do {
++	/*
++	 * FIXME: Replace this by a per signal struct xarray once there is
++	 * a plan to handle the resulting CRIU regression gracefully.
++	 */
++	for (cnt = 0; cnt <= INT_MAX; cnt++) {
+ 		spin_lock(&hash_lock);
+-		head = &posix_timers_hashtable[hash(sig, sig->posix_timer_id)];
+-		if (!__posix_timers_find(head, sig, sig->posix_timer_id)) {
++		id = sig->next_posix_timer_id;
++
++		/* Write the next ID back. Clamp it to the positive space */
++		sig->next_posix_timer_id = (id + 1) & INT_MAX;
++
++		head = &posix_timers_hashtable[hash(sig, id)];
++		if (!__posix_timers_find(head, sig, id)) {
+ 			hlist_add_head_rcu(&timer->t_hash, head);
+-			ret = sig->posix_timer_id;
++			spin_unlock(&hash_lock);
++			return id;
+ 		}
+-		if (++sig->posix_timer_id < 0)
+-			sig->posix_timer_id = 0;
+-		if ((sig->posix_timer_id == first_free_id) && (ret == -ENOENT))
+-			/* Loop over all possible ids completed */
+-			ret = -EAGAIN;
+ 		spin_unlock(&hash_lock);
+-	} while (ret == -ENOENT);
+-	return ret;
++	}
++	/* POSIX return code when no timer ID could be allocated */
++	return -EAGAIN;
+ }
+ 
+ static inline void unlock_timer(struct k_itimer *timr, unsigned long flags)
 diff --git a/kernel/time/tick-sched.c b/kernel/time/tick-sched.c
 index 1ad89eec2a55..2b865cb77feb 100644
 --- a/kernel/time/tick-sched.c
@@ -6875,13 +7387,81 @@ index 1e8a49dc956e..7c977b945c92 100644
  		__this_cpu_write(hard_watchdog_warn, true);
  		return;
  	}
+diff --git a/lib/debugobjects.c b/lib/debugobjects.c
+index dacb80c22c4f..3c9e00e207dc 100644
+--- a/lib/debugobjects.c
++++ b/lib/debugobjects.c
+@@ -600,10 +600,21 @@ static void debug_objects_fill_pool(void)
+ {
+ 	/*
+ 	 * On RT enabled kernels the pool refill must happen in preemptible
+-	 * context:
++	 * context -- for !RT kernels we rely on the fact that spinlock_t and
++	 * raw_spinlock_t are basically the same type and this lock-type
++	 * inversion works just fine.
+ 	 */
+-	if (!IS_ENABLED(CONFIG_PREEMPT_RT) || preemptible())
++	if (!IS_ENABLED(CONFIG_PREEMPT_RT) || preemptible()) {
++		/*
++		 * Annotate away the spinlock_t inside raw_spinlock_t warning
++		 * by temporarily raising the wait-type to WAIT_SLEEP, matching
++		 * the preemptible() condition above.
++		 */
++		static DEFINE_WAIT_OVERRIDE_MAP(fill_pool_map, LD_WAIT_SLEEP);
++		lock_map_acquire_try(&fill_pool_map);
+ 		fill_pool();
++		lock_map_release(&fill_pool_map);
++	}
+ }
+ 
+ static void
 diff --git a/localversion-rt b/localversion-rt
 new file mode 100644
-index 000000000000..9f7d0bdbffb1
+index 000000000000..08b3e75841ad
 --- /dev/null
 +++ b/localversion-rt
 @@ -0,0 +1 @@
-+-rt13
++-rt14
+diff --git a/mm/page_alloc.c b/mm/page_alloc.c
+index 69668817fed3..0bad8f3ce523 100644
+--- a/mm/page_alloc.c
++++ b/mm/page_alloc.c
+@@ -6602,19 +6602,17 @@ static void __build_all_zonelists(void *data)
+ 	unsigned long flags;
+ 
+ 	/*
+-	 * Explicitly disable this CPU's interrupts before taking seqlock
+-	 * to prevent any IRQ handler from calling into the page allocator
+-	 * (e.g. GFP_ATOMIC) that could hit zonelist_iter_begin and livelock.
++	 * The zonelist_update_seq must be acquired with irqsave because the
++	 * reader can be invoked from IRQ with GFP_ATOMIC.
+ 	 */
+-	local_irq_save(flags);
++	write_seqlock_irqsave(&zonelist_update_seq, flags);
+ 	/*
+-	 * Explicitly disable this CPU's synchronous printk() before taking
+-	 * seqlock to prevent any printk() from trying to hold port->lock, for
++	 * Also disable synchronous printk() to prevent any printk() from
++	 * trying to hold port->lock, for
+ 	 * tty_insert_flip_string_and_push_buffer() on other CPU might be
+ 	 * calling kmalloc(GFP_ATOMIC | __GFP_NOWARN) with port->lock held.
+ 	 */
+ 	printk_deferred_enter();
+-	write_seqlock(&zonelist_update_seq);
+ 
+ #ifdef CONFIG_NUMA
+ 	memset(node_load, 0, sizeof(node_load));
+@@ -6651,9 +6649,8 @@ static void __build_all_zonelists(void *data)
+ #endif
+ 	}
+ 
+-	write_sequnlock(&zonelist_update_seq);
+ 	printk_deferred_exit();
+-	local_irq_restore(flags);
++	write_sequnlock_irqrestore(&zonelist_update_seq, flags);
+ }
+ 
+ static noinline void __init
 diff --git a/net/8021q/vlan_dev.c b/net/8021q/vlan_dev.c
 index d3e511e1eba8..0fa52bcc296b 100644
 --- a/net/8021q/vlan_dev.c

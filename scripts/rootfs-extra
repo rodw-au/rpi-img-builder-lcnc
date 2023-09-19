@@ -47,6 +47,18 @@ if [[ "$DISTRO" == "ubuntu" ]]; then
 		apt install -y ${PKGS} ${USER_PKGS} ${SYSMODS} openresolv openssh-client openssh-server
 	fi
 fi
+# Include linuxCNC docs dependencies in ROOTFS
+if [[ "$BUILD_DOCS" == "1" ]]; then
+	apt install -y ${PKGS} ${DOC_PKGS}
+fi 
+
+# Clone Linuxcnc in ROOTFS
+if [[ "$CLONE_IN_ROOTFS" == "1" ]]; then
+	mkdir -p /tmp/devel/
+	cd /tmp/devel/
+	echo "Cloning linuxCNC into /tmp/devel/"
+	git clone https://github.com/LinuxCNC/linuxcnc.git linuxcnc-dev
+fi
 apt -y clean
 apt -y autoclean
 

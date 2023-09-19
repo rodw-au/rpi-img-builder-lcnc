@@ -1,6 +1,7 @@
 #!/bin/bash
 
 run_function0 (){
+
 if [[ -f "board.txt" ]]; then
 	sed -i 's/net.ifnames=0/net.ifnames=0 processor.max_cstate=1 isolcpus=2,3/g' board.txt
 fi
@@ -16,57 +17,62 @@ echo "run_function 1 completed"
 
 
 run_function2 (){
-echo "Starting run_function 2 - Install linuxcnc and xfce"	
-
-#add isolcpus to config.txt
-#sed -i "$ a processor.max_cstate=1\nisolcpus=2,3" p2/boot/broadcom/config.txt
-
-
-# ALL DEBS BELOW are now installed from USER_PKGS in userdata.txt 
-# This will instal lthem in the make rootfs step where they will be cached for future build
-# Note that linuxcnc Doc dependencies are not installed to save space (8gb MAX ROOTFS)
-
-# Intall xfce
-#apt install -y xfce4 xfce4-terminal xfce4-power-manager geany firefox-esr konsole
-#install linuxcnc dependencies
-#apt install -y dh-python libudev-dev docbook-xsl asciidoc ghostscript imagemagick asciidoc-dblatex bwidget intltool libboost-python-dev libepoxy-dev libgl1-mesa-dev libglu1-mesa-dev libgtk-3-dev libmodbus-dev libgpiod-dev libeditreadline-dev libusb-1.0-0-dev libxmu-dev netcat-traditional  netcat-openbsd po4a python3-dev python3-tk python3-xlib tcl8.6-dev tclx tk8.6-dev yapps2 libgtk2.0-dev
-#install linuxcnc runtime dependencies
-#apt install -y iptables mesa-utils python3-numpy python3-cairo python3-gi-cairo python3-opengl python3-configobj libgtksourceview-3.0-dev tcl-tclreadline python3-pyqt5 python3-pyqt5.qsci python3-pyqt5.qtsvg python3-pyqt5.qtopengl python3-opencv python3-dbus python3-espeak python3-dbus.mainloop.pyqt5 espeak-ng pyqt5-dev-tools gstreamer1.0-tools espeak python3-poppler-qt5 python3-pyqt5.qtwebengine  python3-pyqt5.qtwebkit xvfb python3-serial
-#Linuxcnc Docs - Commented out for the Pi to save space
-#apt install -y dvipng fonts-dejavu graphviz groff inkscape python3-lxml source-highlight texlive-font-utils texlive-lang-cyrillic texlive-lang-european texlive-lang-french texlive-lang-german texlive-lang-polish texlive-lang-spanish w3c-linkchecker
 
 # Install the Linuxcnc Debs
+
 # if the linuxcnc folder exists
-if [[ `ls /tmp/devel/linuxcnc-dev/scripts/rip-environment` ]]; then
-	# move to linuxcnc-dev/src folder
-	echo "linuxcnc-dev  found, executing git pull"
-	cd /tmp/devel/linuxcnc-dev/src
-	git pull
-	# return to linuxcnc-dev folder
-	cd  ..
-else
-	# Linuxcnc does not exist so clone it
+#if [[ `ls /tmp/devel/linuxcnc-dev/scripts/rip-environment` ]]; then
+	## move to linuxcnc-dev/src folder
+	#echo "linuxcnc-dev  found, executing git pull"
+	#cd /tmp/devel/linuxcnc-dev/src
+	#git pull
+	## return to linuxcnc-dev folder
+	#cd  ..
+#else
+	## Linuxcnc does not exist so clone it
+	#mkdir -p /tmp/devel/
+	#cd /tmp/devel/
+	#echo "linuxcnc-dev not found, executing git clone"
+	#git clone https://github.com/LinuxCNC/linuxcnc.git linuxcnc-dev
+	#cd linuxcnc-dev/srcgit clone https://github.com/LinuxCNC/linuxcnc.git linuxcnc-dev
+	#cd linuxcnc-dev/src
+	##git checkout 2.9
+	## move to linuxcnc-dev/debian folder
+	#cd ../debian
+	##./configure no-docs	
+	#./configure
+	#cd ..
+#fi
+# Should now be in linuxcnc-dev folder
+
+# Lets build linuxcnc in/tmp/devel/linuxcnc-dev/src
+
+if [["$CLONE_IN_ROOTFS" == "0"]]; then  # We have not cloned thee source in ROOTFS
+	# we need to clone linuxcnc
+	rm -rf /tmp/devel
 	mkdir -p /tmp/devel/
 	cd /tmp/devel/
-	echo "linuxcnc-dev not found, executing git clone"
 	git clone https://github.com/LinuxCNC/linuxcnc.git linuxcnc-dev
-	cd linuxcnc-dev/src
-	#git checkout 2.9
-	# move to linuxcnc-dev/debian folder
-	cd ../debian
-	#./configure no-docs	
-	./configure
-	cd ..
+else                                    # We have cloned thee source in ROOTFS to speed things up, we just need to pull the latest source
+	cd /tmp/devel/linuxcnc-dev
+	git pull
 fi
-# Should now be in linuxcnc-dev folder
+cd /tmp/devel/linuxcnc-dev/
+git checkout "$BRANCH"                 # Check out the beanch requested
+cd ./debian
+### NOTE: Building with $BUILD_DOCS" == "1" will fail if ROOTFS was built with "$BUILD_DOCS" == "0" as dependencies will be missing
+if [[ "$BUILD_DOCS" == "1" ]]; then    # We will build the docs
+	./configure
+else
+	./configure no-docs	               # Skip building docs
+fi
+cd ..
 echo "Building linuxcnc with dpkg-buildpackage " 
 dpkg-buildpackage -b -uc -j$(nproc)
-
 echo "installing linuxcnc debs" 
-cd ..
-# now in devel folder
-FILES="./*.deb"
-for f in $FILES
+cd ..                                  # now in /tmp/devel folder
+FILES="./*.deb"                        # we want to dynamically install packagesa in case the file names change
+for f in $FILES                        # We need to install debs in the right order and we don't want debug symbols
 do
   if [[  $f == *dbgsym*.deb ]] 
   then
@@ -74,17 +80,14 @@ do
   fi
   if [[  $f == *dev*.deb ]] 
   then
-    g=$f          # save linuxcnc-uspace-dev file name and install it last
+    g=$f               # save linuxcnc-uspace-dev file name and install it last
     continue      
   fi   
-  echo "Installing $f"
-  dpkg -i "$f"
+  echo "Installing $f" # linuxcnc-uspace
+  dpkg -i "$f"          #dpkg will fail if dependencies are not installed in ROOTFS
 done
-echo "Installing $f"
+echo "Installing $g"   # linuxcnc-uspace-dev
 dpkg -i "$g"
-
-#dpkg -i ./linuxcnc-uspace_2.9.0~pre1_arm64.deb
-#dpkg -i ./linuxcnc-uspace-dev_2.9.0~pre1_arm64.deb
 
 # Finished!
 echo "Stage 2 All done installing linuxcnc!"
@@ -95,10 +98,7 @@ echo "Entering run_function3"
 # Copy debs to output
 if [[ `ls p2/tmp/devel/*.deb` ]]; then
     mkdir -p output/${BOARD}/linuxcnc
-	cp -fr p2/tmp/devel/*.deb output/${BOARD}/linuxcnc
-	#copy the linuxcnc-dev source folder out of the chroot
-	#rsync -azvh p2/tmp/devel/linuxcnc-dev files
-	rm -rf p2/tmp/devel
+	cp -fr p2/tmp/devel/*.deb output/${BOARD}/linuxcnc  # copy linuxcnc debs to the output folder
+	rm -rf p2/tmp/devel                                 # remove /tmp/devel folder which includes linuxcnc-dev to keep image size down
 fi
-#re
 }
