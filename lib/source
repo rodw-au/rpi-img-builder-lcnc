@@ -1,27 +1,33 @@
 #!/bin/bash
 
+set -e
+
 # variables
 SRC="source"
 KERNEL="linux-rpi"
 CKERNEL="linux"
 
+if [ ! -r /etc/os-release ]; then
+	echo "E: Expected file '/etc/os-release'  to exist. Are you sure you are running Linux?"
+	exit 1
+fi
+
 # host machine
-HOST_MACHINE=`cat /etc/os-release | grep -w NAME | sed 's/NAME=//g' | sed 's/"//g' | sed 's/ GNU\/Linux//g'`
-HOST_CODENAME=`cat /etc/os-release | grep -w "VERSION_CODENAME" | sed 's/VERSION_CODENAME=//g'`
-HOST_ARCH=`uname -m`
+HOST_MACHINE=$(cat /etc/os-release | grep -w NAME | sed 's/NAME=//g' | sed 's/"//g' | sed 's/ GNU\/Linux//g')
+HOST_CODENAME=$(cat /etc/os-release | grep -w "VERSION_CODENAME" | sed 's/VERSION_CODENAME=//g')
+HOST_ARCH=$(uname -m)
 
 # validate
 validation(){
-BUILDER=`grep "builder=" "userdata.txt" | sed 's/builder=//g'`
+BUILDER=$(grep "builder=" "userdata.txt" | sed 's/builder=//g')
 UD="userdata.txt"
 if [ -f "$UD" ]; then
 	:;
 else 
 	echo "";
 	echo "Create a $UD file";
-	while [ true ]; do
-		read -t 10 -n 1
-		if [ $? = 0 ]; then
+	while true ; do
+		if read -t 10 -n 1 ; then
 			exit 0;
 		fi
 	done
@@ -30,7 +36,7 @@ if [[ "$BUILDER" == "5.4" ]]; then
 	:;
 else
 	echo -e "The ${WHT}$UD${FIN} file has expired. Please create a new one."
-	exit 0;
+	exit 1;
 fi
 }
 
