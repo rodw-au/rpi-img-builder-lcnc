@@ -2,7 +2,7 @@
 
 debian_release(){
 if [[ "$DISTRO_VERSION" == "bullseye" ]]; then
-	tee ${SOURCES_LIST} <<EOF
+	tee "${SOURCES_LIST}" <<EOF
 deb http://deb.debian.org/debian ${DISTRO_VERSION} main contrib non-free
 deb http://deb.debian.org/debian ${DISTRO_VERSION}-updates main contrib non-free
 deb http://deb.debian.org/debian ${DISTRO_VERSION}-proposed-updates main contrib non-free
@@ -11,7 +11,7 @@ deb http://deb.debian.org/debian ${DISTRO_VERSION}-backports main contrib non-fr
 EOF
 fi
 if [[ "$DISTRO_VERSION" == "bookworm" ]]; then
-	tee ${SOURCES_LIST} <<EOF
+	tee "${SOURCES_LIST}" <<EOF
 deb http://deb.debian.org/debian ${DISTRO_VERSION} main contrib non-free non-free-firmware
 deb http://deb.debian.org/debian ${DISTRO_VERSION}-updates main contrib non-free non-free-firmware
 deb http://deb.debian.org/debian ${DISTRO_VERSION}-proposed-updates main contrib non-free non-free-firmware
@@ -20,7 +20,7 @@ deb http://deb.debian.org/debian ${DISTRO_VERSION}-backports main contrib non-fr
 EOF
 fi
 if [[ "$DISTRO_VERSION" == "sid" || "$DISTRO_VERSION" == "testing" || "$DISTRO_VERSION" == "unstable" ]]; then
-	tee ${SOURCES_LIST} <<EOF
+	tee "${SOURCES_LIST}" <<EOF
 deb http://deb.debian.org/debian ${DISTRO_VERSION} main contrib non-free non-free-firmware
 EOF
 fi
@@ -28,7 +28,7 @@ fi
 
 devuan_release(){
 if [[ "$DISTRO_VERSION" == "chimaera" ]]; then
-	tee ${SOURCES_LIST} <<EOF
+	tee "${SOURCES_LIST}" <<EOF
 deb http://deb.devuan.org/merged ${DISTRO_VERSION} main contrib non-free
 deb http://deb.devuan.org/merged ${DISTRO_VERSION}-updates main contrib non-free
 deb http://deb.devuan.org/devuan ${DISTRO_VERSION}-proposed-updates main contrib non-free
@@ -37,7 +37,7 @@ deb http://deb.devuan.org/merged ${DISTRO_VERSION}-backports main contrib non-fr
 EOF
 fi
 if [[ "$DISTRO_VERSION" == "daedalus" ]]; then
-	tee ${SOURCES_LIST} <<EOF
+	tee "${SOURCES_LIST}" <<EOF
 deb http://deb.devuan.org/merged ${DISTRO_VERSION} main contrib non-free non-free-firmware
 deb http://deb.devuan.org/merged ${DISTRO_VERSION}-updates main contrib non-free non-free-firmware
 deb http://deb.devuan.org/merged ${DISTRO_VERSION}-proposed-updates main contrib non-free non-free-firmware
@@ -46,14 +46,14 @@ deb http://deb.devuan.org/merged ${DISTRO_VERSION}-backports main contrib non-fr
 EOF
 fi
 if [[ "$DISTRO_VERSION" == "ceres" || "$DISTRO_VERSION" == "excalibur" || "$DISTRO_VERSION" == "testing" || "$DISTRO_VERSION" == "unstable" ]]; then
-	tee ${SOURCES_LIST} <<EOF
+	tee "${SOURCES_LIST}" <<EOF
 deb http://deb.devuan.org/merged ${DISTRO_VERSION} main contrib non-free non-free-firmware
 EOF
 fi
 }
 
 raspbian_release(){
-tee ${SOURCES_LIST} <<EOF
+tee "${SOURCES_LIST}" <<EOF
 deb http://raspbian.raspberrypi.org/raspbian ${DISTRO_VERSION} main contrib non-free rpi
 
 # optional
@@ -63,7 +63,7 @@ EOF
 }
 
 ubuntu_release(){
-tee ${SOURCES_LIST} <<EOF
+tee "${SOURCES_LIST}" <<EOF
 deb http://ports.ubuntu.com/ubuntu-ports/ ${DISTRO_VERSION} main restricted
 deb http://ports.ubuntu.com/ubuntu-ports/ ${DISTRO_VERSION}-updates main restricted
 deb http://ports.ubuntu.com/ubuntu-ports/ ${DISTRO_VERSION} universe
@@ -85,11 +85,11 @@ EOF
 }
 
 choose_release(){
-rm -f ${SOURCES_LIST}
+rm -f "${SOURCES_LIST}"
 if [[ "$DISTRO" == "debian" || "$DISTRO" == "devuan" || "$DISTRO" == "raspbian" || "$DISTRO" == "ubuntu" ]]; then
-	${DISTRO}_release
+	"${DISTRO}_release"
 else
 	echo "${CAP_DISTRO} ${CAP_RELEASE} is not supported."
-	exit 0
+	exit 1
 fi
 }

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # RTL8812AU
 rtl8812au_download(){
 if [[ -d "rtl8812au" ]]; then
@@ -27,8 +29,8 @@ sed -i '/source "drivers\/net\/wireless\/ti\/Kconfig"/a source "drivers\/net\/wi
 
 
 rtl8812au_module(){
-if [ $RTL88XXAU -eq 1 ] && [[ -f "arch/${ARCH}/configs/${LINUX_DEFCONFIG}" ]]; then
-	echo CONFIG_88XXAU=m >> arch/${ARCH}/configs/${LINUX_DEFCONFIG}
+if [ "$RTL88XXAU" -eq 1 ] && [[ -f "arch/${ARCH}/configs/${LINUX_DEFCONFIG}" ]]; then
+	echo CONFIG_88XXAU=m >> "arch/${ARCH}/configs/${LINUX_DEFCONFIG}"
 fi
 }
 
@@ -62,8 +64,8 @@ sed -i '/source "drivers\/net\/wireless\/ti\/Kconfig"/a source "drivers\/net\/wi
 
 
 rtl8811cu_module(){
-if [ $RTL88XXCU -eq 1 ] && [[ -f "arch/${ARCH}/configs/${LINUX_DEFCONFIG}" ]]; then
-	echo CONFIG_RTL8821CU=m >> arch/${ARCH}/configs/${LINUX_DEFCONFIG}
+if [ "$RTL88XXCU" -eq 1 ] && [[ -f "arch/${ARCH}/configs/${LINUX_DEFCONFIG}" ]]; then
+	echo CONFIG_RTL8821CU=m >> "arch/${ARCH}/configs/${LINUX_DEFCONFIG}"
 fi
 }
 
@@ -98,23 +100,23 @@ drivers/net/wireless/Kconfig
 }
 
 rtl88x2bu_module(){
-if [ $RTL88X2BU -eq 1 ] && [[ -f "arch/${ARCH}/configs/${LINUX_DEFCONFIG}" ]]; then
-	echo CONFIG_RTL8822BU=m >> arch/${ARCH}/configs/${LINUX_DEFCONFIG}
+if [ "$RTL88X2BU" -eq 1 ] && [[ -f "arch/${ARCH}/configs/${LINUX_DEFCONFIG}" ]]; then
+	echo CONFIG_RTL8822BU=m >> "arch/${ARCH}/configs/${LINUX_DEFCONFIG}"
 fi
 }
 
 extra_wireless(){
-if [ $RTL88XXAU -eq 1 ]; then
+if [ "$RTL88XXAU" -eq 1 ]; then
 	echo -en "${WHT}Realtek 88XXAU${FIN} "
 	rtl8812au_download
 	echo_bdone
 fi
-if [ $RTL88X2BU -eq 1 ]; then
+if [ "$RTL88X2BU" -eq 1 ]; then
 	echo -en "${WHT}Realtek 88X2BU${FIN} "
 	rtl88x2bu_download
 	echo_bdone
 fi
-if [ $RTL88XXCU -eq 1 ]; then
+if [ "$RTL88XXCU" -eq 1 ]; then
 	echo -en "${WHT}Realtek 88XXCU${FIN} "
 	rtl8811cu_download
 	echo_bdone
