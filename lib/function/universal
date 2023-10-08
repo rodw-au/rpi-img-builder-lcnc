@@ -1,11 +1,13 @@
 #!/bin/bash
 
+set -e
+
 # stage 1
 stage1_kernel(){
-if [[ `ls ${OUTPUT}/{linux-image-*.deb,linux-headers-*.deb}` ]] > /dev/null 2>&1; then
-	cp ${OUTPUT}/*.deb p2/root
+if [[ $(ls "${OUTPUT}"/{linux-image-*.deb,linux-headers-*.deb}) ]] > /dev/null 2>&1; then
+	cp "${OUTPUT}"/*.deb p2/root
 else
-	echo ""
+	echo
 	echo -en "${BOARD}"
 	echo -e ": Compile a kernel before building an image."
 	make cleanup
@@ -15,7 +17,7 @@ fi
 
 # stage 2
 raspberrypi_sys_mods(){
-echo ""
+echo
 echo "Installing raspi-sys-mods ..."
 git clone https://github.com/RPi-Distro/raspberrypi-sys-mods.git
 if [[ "$DISTRO" == "devuan" ]]; then
@@ -46,8 +48,8 @@ fi
 
 # rpi-eeprom
 find_eeprom(){
-EEPROM_VERSION=$(curl --silent -L ${CHANGELOG} | awk '{if (NR==1) {print substr($2, 1, length($2)-3)}}' | sed 's/[()]//g')
-if [[ `wget -S --spider ${ERURL}rpi-eeprom_${EEPROM_VERSION}.orig.tar.gz 2>&1 | grep 'HTTP/1.1 200 OK'` ]]; then
+EEPROM_VERSION=$(curl --silent -L "${CHANGELOG}" | awk '{if (NR==1) {print substr($2, 1, length($2)-3)}}' | sed 's/[()]//g')
+if wget -S --spider "${ERURL}rpi-eeprom_${EEPROM_VERSION}.orig.tar.gz" 2>&1 | grep -q 'HTTP/1.1 200 OK'; then
 	download_eeprom
 else
 	finding_eeprom
@@ -55,8 +57,8 @@ fi
 }
 
 finding_eeprom(){
-EEPROM_VERSION=$(curl --silent -L ${CHANGELOG} | awk '{if (NR==10) {print substr($2, 1, length($2)-3)}}' | sed 's/[()]//g')
-if [[ `wget -S --spider ${ERURL}rpi-eeprom_${EEPROM_VERSION}.orig.tar.gz 2>&1 | grep 'HTTP/1.1 200 OK'` ]]; then
+EEPROM_VERSION=$(curl --silent -L "${CHANGELOG}" | awk '{if (NR==10) {print substr($2, 1, length($2)-3)}}' | sed 's/[()]//g')
+if wget -S --spider "${ERURL}rpi-eeprom_${EEPROM_VERSION}.orig.tar.gz" 2>&1 | grep -q 'HTTP/1.1 200 OK'; then
 	download_eeprom
 else
 	EEPROM_VERSION="13.12"
@@ -65,8 +67,8 @@ fi
 }
 
 download_eeprom(){
-wget -cq --show-progress ${ERURL}rpi-eeprom_${EEPROM_VERSION}-1.debian.tar.xz
-wget -cq --show-progress ${ERURL}rpi-eeprom_${EEPROM_VERSION}.orig.tar.gz
+wget -cq --show-progress "${ERURL}rpi-eeprom_${EEPROM_VERSION}-1.debian.tar.xz"
+wget -cq --show-progress "${ERURL}rpi-eeprom_${EEPROM_VERSION}.orig.tar.gz"
 }
 
 bcm2711_eeprom(){
@@ -81,20 +83,20 @@ mv -f rpi-eeprom-update.patch /root/eeprom/
 mv -f rpi-eeprom-control.patch /root/eeprom/
 cd ~/eeprom
 find_eeprom
-tar xf rpi-eeprom_${EEPROM_VERSION}.orig.tar.gz
-tar xf rpi-eeprom_${EEPROM_VERSION}-1.debian.tar.xz
-rm -f rpi-eeprom_${EEPROM_VERSION}-1.debian.tar.xz
+tar xf "rpi-eeprom_${EEPROM_VERSION}.orig.tar.gz"
+tar xf "rpi-eeprom_${EEPROM_VERSION}-1.debian.tar.xz"
+rm -f "rpi-eeprom_${EEPROM_VERSION}-1.debian.tar.xz"
 mkdir -p debian/patches
 mv rpi-eeprom-update.patch debian/patches/rpi-eeprom-update.patch 
 echo rpi-eeprom-update.patch >> debian/patches/series
-mv -f debian rpi-eeprom-${EEPROM_VERSION}/
-mv rpi-eeprom-control.patch rpi-eeprom-${EEPROM_VERSION}/
-cd rpi-eeprom-${EEPROM_VERSION}
+mv -f debian "rpi-eeprom-${EEPROM_VERSION}"/
+mv rpi-eeprom-control.patch "rpi-eeprom-${EEPROM_VERSION}"/
+cd "rpi-eeprom-${EEPROM_VERSION}"
 patch -p1 < rpi-eeprom-control.patch
 rm -f rpi-eeprom-control.patch
 dpkg-buildpackage -us -nc -uc
 cd ..
-dpkg -i *.deb
+dpkg -i ./*.deb
 cd ..
 rm -fdr eeprom
 }
@@ -153,21 +155,21 @@ apt -y clean
 apt -y autoclean
 sleep 1s
 cd ~
-dpkg -i *.deb
-rm -f *.deb
+dpkg -i ./*.deb
+rm -f ./*.deb
 sleep .75
 # take note of linux kernel release
 if [ -f /usr/src/linux-headers-*/include/config/kernel.release ]; then
-	KERNEL_RELEASE=`cat /usr/src/linux-headers-*/include/config/kernel.release`
+	KERNEL_RELEASE=$(cat /usr/src/linux-headers-*/include/config/kernel.release)
 else
-	KERNEL_RELEASE=`ls /boot/config-* | sed 's/\/boot\/config-//g'`
+	KERNEL_RELEASE=$(ls /boot/config-* | sed 's/\/boot\/config-//g')
 fi
-echo -e INSTALLED_KERNEL='"'$KERNEL_RELEASE'"' > /root/kernel.txt
+echo -e "INSTALLED_KERNEL=\"$KERNEL_RELEASE\"" > /root/kernel.txt
 # add fstype to the board.txt and kernel.txt file
-echo FSTYPE='"'${FSTYPE}'"' >> /root/kernel.txt
-echo "" >> /etc/opt/board.txt
+echo "FSTYPE=\"${FSTYPE}\"" >> /root/kernel.txt
+echo >> /etc/opt/board.txt
 echo "# filesystem" >> /etc/opt/board.txt
-echo FSTYPE='"'${FSTYPE}'"' >> /etc/opt/board.txt
+echo "FSTYPE=\"${FSTYPE}\”" >> /etc/opt/board.txt
 }
 
 # whiptail color palette (ubuntu)
@@ -188,7 +190,7 @@ EOF
 # user scripts
 uscripts_pre-stage1(){
 if [[ -f "files/userscripts/uscripts" ]]; then
-	if [[ `grep -w "run_function0" "files/userscripts/uscripts"` ]]; then
+	if grep -q -w "run_function0" "files/userscripts/uscripts"; then
 		source files/userscripts/uscripts
 		run_function0
 	fi
@@ -202,8 +204,8 @@ if [[ -f "files/userscripts/uscripts" ]]; then
 	if [ -f p2/root/userscripts/README.md ]; then
 		rm -f p2/root/userscripts/README.md
 	fi
-	if [[ `grep -w "run_function1" "files/userscripts/uscripts"` ]]; then
-		if [[ `grep -w "run_function0" "files/userscripts/uscripts"` ]]; then
+	if grep -q -w "run_function1" "files/userscripts/uscripts"; then
+		if grep -q -w "run_function0" "files/userscripts/uscripts"; then
 			# file already sourced
 			:;
 		else
@@ -216,7 +218,7 @@ fi
 
 uscripts_stage2(){
 if [[ -f "/root/userscripts/uscripts" ]]; then
-	if [[ `grep -w "run_function2" "/root/userscripts/uscripts"` ]]; then
+	if grep -q -w "run_function2" "/root/userscripts/uscripts"; then
 		echo -e "\e[1;33mRunning user scripts\e[0m."
 		source /root/userscripts/uscripts
 		run_function2
@@ -254,13 +256,13 @@ echo Done.
 # defrag
 defrag_p2(){
 if [[ "$FSTYPE" == "ext4" ]]; then
-	e4defrag -c ${P_VALUE}
+	e4defrag -c "${P_VALUE}"
 fi
 if [[ "$FSTYPE" == "btrfs" ]]; then
-	btrfs filesystem defragment -f -r ${P_VALUE}
+	btrfs filesystem defragment -f -r "${P_VALUE}"
 fi
 if [[ "$FSTYPE" == "xfs" ]]; then
-	xfs_fsr ${P_VALUE}
+	xfs_fsr "${P_VALUE}"
 fi
 }
 
@@ -268,13 +270,13 @@ fi
 ext4_shrink(){
 echo ""
 chmod +x scripts/shrink
-scripts/shrink -s ${BOARD_EXT}-${DISTRO}-${DISTRO_VERSION}-${IMAGE_DATE}.img
+scripts/shrink -s "${BOARD_EXT}-${DISTRO}-${DISTRO_VERSION}-${IMAGE_DATE}.img"
 echo 'LOOP1="/dev/mapper/' > kpart1
 echo 'LOOP2="/dev/mapper/' >> kpart1
 IMAGE_FILE="${BOARD_EXT}-${DISTRO}-${DISTRO_VERSION}-${IMAGE_DATE}.img"
-kpartx="$(kpartx -av $IMAGE_FILE)"
+kpartx="$(kpartx -av "$IMAGE_FILE")"
 echo "$kpartx"
-if [[ `grep -w "VERSION_CODENAME=jammy" "/etc/os-release"` ]]; then
+if grep -q -w "VERSION_CODENAME=jammy" "/etc/os-release"; then
 	# snapd woes; grep for higher loop numbers
 	grep -o 'loop[0-9]\+p.' <<<"$kpartx" > kpart2;
 else
@@ -292,8 +294,8 @@ mount "${BOOT}" p1
 rm -f p1/cmdline.txt
 rm -f part-uuid.txt
 ROOTFS="${LOOP2}"
-ROOT_PARTUUID=$(blkid -o export -- ${ROOTFS} | sed -ne 's/^PARTUUID=//p')
-echo ROOT_PARTUUID='"'$ROOT_PARTUUID'"' > part-uuid.txt
+ROOT_PARTUUID=$(blkid -o export -- "${ROOTFS}" | sed -ne 's/^PARTUUID=//p')
+echo "ROOT_PARTUUID=\"$ROOT_PARTUUID\"" > part-uuid.txt
 source part-uuid.txt
 cmdline > /dev/null 2>&1
 sleep .75
@@ -310,7 +312,7 @@ if [[ "$ARCH" == "arm" ]]; then
 fi
 umount p1
 rm -fdr p1
-kpartx -d ${IMAGE_FILE}
+kpartx -d "${IMAGE_FILE}"
 rm -f kpart.txt
 }
 
@@ -319,14 +321,15 @@ finish_image(){
 IMAGE_TIME="$(date +%T | sed 's/://g' | sed 's/..$//')"
 IMAGE_FIN_NAME="${BOARD_EXT}-${DISTRO}-${DISTRO_VERSION}-${INSTALLED_KERNEL}-${ARCH_EXT}-${FSTYPE}-${IMAGE_DATE}-${IMAGE_TIME}.img"
 if [[ -f "${IMAGE_FILE_NAME}" ]]; then
-	mv -f ${IMAGE_FILE_NAME} ${IMAGE_FIN_NAME}
+	mv -f "${IMAGE_FILE_NAME}" "${IMAGE_FIN_NAME}"
 fi
-if [ $COMPRESS_IMG -eq 1 ]; then
-	echo ""; echo_compress
-	xz -zev --threads=${CORES} ${IMAGE_FIN_NAME}
+if [ "$COMPRESS_IMG" -eq 1 ]; then
+	echo
+	echo_compress
+	xz -zev --threads="${CORES}" "${IMAGE_FIN_NAME}"
 	if [[ -f "${IMAGE_FIN_NAME}.xz" ]]; then
-		sha256sum ${IMAGE_FIN_NAME}.xz > ${IMAGE_FIN_NAME}.xz.sha256
-		sha256sum --check ${IMAGE_FIN_NAME}.xz.sha256
+		sha256sum "${IMAGE_FIN_NAME}.xz" > "${IMAGE_FIN_NAME}.xz.sha256"
+		sha256sum --check "${IMAGE_FIN_NAME}.xz.sha256"
 	fi
 fi
 }
