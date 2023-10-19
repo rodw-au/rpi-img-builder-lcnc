@@ -4,77 +4,60 @@ source lib/source
 validation
 source board.txt
 source userdata.txt
+if [ $VERBOSE -eq 1 ]; then set -x; fi
 source packaging/pkgvars
 source lib/function/rpi-commit
-source lib/function/wireless
+source lib/function/patching
 source lib/function/modconfig
+source lib/function/compilers
 
 # prep
 validation
-if [ $VERBOSE -eq 1 ]; then
-	set -x;
-fi
-if [[ "$HOST_ARCH" == "aarch64" ]] && [[ "$ARCH" == "arm64" ]]; then
-	CROSSCOMPILE="0"
-fi
-if [[ "$HOST_ARCH" == "aarch64" ]] && [[ "$ARCH" == "arm" ]]; then
-	CROSSCOMPILE="1"
-fi
-if [[ "$HOST_ARCH" == "x86_64"  ]] && [[ "$ARCH" == "arm" || "$ARCH" == "arm64" ]]; then
-	CROSSCOMPILE="1"
-fi
-compiler
+if [[ "$HOST_ARCH" == "aarch64" ]] && [[ "$ARCH" == "arm64" ]]; then CROSSCOMPILE="0"; fi
+if [[ "$HOST_ARCH" == "aarch64" ]] && [[ "$ARCH" == "arm" ]]; then CROSSCOMPILE="1"; fi
+if [[ "$HOST_ARCH" == "x86_64"  ]] && [[ "$ARCH" == "arm" || "$ARCH" == "arm64" ]]; then CROSSCOMPILE="1"; fi
+# compiler
+linux_compilers
+# source directory
 source_dir
 # commit
-echo
-echo -e -n "${WHT}Paste commit: ${FIN}"
-read commit
-
-if [ -e ${CKERNEL}-$commit ]; then
-	echo "";
-	echo -en "${WHT}${CKERNEL}-$commit${FIN}";
-	echo -en " ${PNK}[${FIN}${YLW}removing${FIN}${PNK}]${FIN} ";
-	rm -fdr ${CKERNEL}-$commit;
-	echo -en "${PNK}[${FIN}${GRN}done${FIN}${PNK}]${FIN}";
+if [ $ENABLE_COMMIT -eq 1 ]; then
+	echo ""
+	echo -e "${WHT}Using commit: ${FIN}${COMMIT}"
+else
+	echo ""
+	echo -en "${WHT}Paste commit: ${FIN}"
+	read COMMIT
 fi
 
-### Download kernel
-if [[ `wget -S --spider https://github.com/raspberrypi/linux/archive/$commit.tar.gz 2>&1 | grep 'HTTP/1.1 200 OK'` ]]; then
+if [[ -e "${CKERNEL}-${COMMIT}" ]]; then
+	echo ""
+	echo -en "${WHT}${CKERNEL}-${COMMIT}${FIN}"
+	echo -en " ${PNK}[${FIN}${YLW}removing${FIN}${PNK}]${FIN}"
+	rm -fdr ${CKERNEL}-${COMMIT}
+	echo -en " ${PNK}[${FIN}${GRN}done${FIN}${PNK}]${FIN}"
+fi
+# download
+if [[ `wget -S --spider https://github.com/raspberrypi/linux/archive/${COMMIT}.tar.gz 2>&1 | grep 'HTTP/1.1 200 OK'` ]]; then
 	download
 else
 	echo ""
 	echo -e "${WHT}It appears the commit you selected is not available${FIN}?"
 	exit 0
 fi
-
-# Extract
+# extract
 extract
-
-# Setup
+# setup and firmware
 setup
 firmware
-
-# Packaging
-packaging
-
-# Defconfig
-if [ $CUSTOM_DEFCONFIG -eq 1 ]; then
-	cconfig
-else
-	fconfig
-fi
-
-# Menuconfig
-if [ $MENUCONFIG -eq 1 ]; then
-	menuconfig
-fi
-
-# Builddeb
-if [ $CROSSCOMPILE -eq 1 ]; then
-	ccompile
-else
-	ncompile
-fi
+# patching and packaging
+linux_patching
+# defconfig
+if [ $CUSTOM_DEFCONFIG -eq 1 ]; then cconfig; else fconfig; fi
+# menuconfig
+if [ $MENUCONFIG -eq 1 ]; then menuconfig; fi
+# builddeb
+builddeb
 echo ""
 # finish
 cd ..
@@ -90,7 +73,7 @@ if [[ `ls *linux*.deb` ]] > /dev/null 2>&1; then
 	exit 0
 else
 	echo ""
-	echo -e "${CKERNEL}-$commit [FAILED]"
+	echo -e "${CKERNEL}-${COMMIT} [FAILED]"
 	read -p "Press enter to continue."
 	exit 1
 fi

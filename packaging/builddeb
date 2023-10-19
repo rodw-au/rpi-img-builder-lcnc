@@ -170,8 +170,8 @@ fi
 
 # Install dtbs
 if [ -d $tmpdir/$boot_path ]; then :; else mkdir -p "$tmpdir/$boot_path"; fi
-if [ "$board_series" = "rpi-4" ]; then
-	# armhf
+if [ "$board_series" = "rpi-4" ] || [ "$board_series" = "rpi-5" ]; then
+	# path 1
 	if [ -f $tmpdir/usr/lib/$linux_packagename/bcm2711-rpi-4-b.dtb ]; then
 		cp -r "$tmpdir/usr/lib/$linux_packagename/bcm2711-rpi-4-b.dtb" "$tmpdir/$boot_path/bcm2711-rpi-4-b.dtb"
 	fi
@@ -184,7 +184,10 @@ if [ "$board_series" = "rpi-4" ]; then
 	if [ -f $tmpdir/usr/lib/$linux_packagename/bcm2711-rpi-cm4s.dtb ]; then
 		cp -r "$tmpdir/usr/lib/$linux_packagename/bcm2711-rpi-cm4s.dtb" "$tmpdir/$boot_path/bcm2711-rpi-cm4s.dtb"
 	fi
-	# arm64
+	if [ -f $tmpdir/usr/lib/$linux_packagename/bcm2712-rpi-5-b.dtb ]; then
+		cp -r "$tmpdir/usr/lib/$linux_packagename/bcm2712-rpi-5-b.dtb" "$tmpdir/$boot_path/bcm2712-rpi-5-b.dtb"
+	fi
+	# path 2
 	if [ -f $tmpdir/usr/lib/$linux_packagename/broadcom/bcm2711-rpi-4-b.dtb ]; then
 		cp -r "$tmpdir/usr/lib/$linux_packagename/broadcom/bcm2711-rpi-4-b.dtb" "$tmpdir/$boot_path/bcm2711-rpi-4-b.dtb"
 	fi
@@ -197,20 +200,17 @@ if [ "$board_series" = "rpi-4" ]; then
 	if [ -f $tmpdir/usr/lib/$linux_packagename/broadcom/bcm2711-rpi-cm4s.dtb ]; then
 		cp -r "$tmpdir/usr/lib/$linux_packagename/broadcom/bcm2711-rpi-cm4s.dtb" "$tmpdir/$boot_path/bcm2711-rpi-cm4s.dtb"
 	fi
+	if [ -f $tmpdir/usr/lib/$linux_packagename/broadcom/bcm2712-rpi-5-b.dtb ]; then
+		cp -r "$tmpdir/usr/lib/$linux_packagename/broadcom/bcm2712-rpi-5-b.dtb" "$tmpdir/$boot_path/bcm2712-rpi-5-b.dtb"
+	fi
 fi
 if [ "$board_series" = "rpi-3" ] || [ "$board_series" = "rpi-2+3" ]; then
-	# armhf
-	if [ -f $tmpdir/usr/lib/$linux_packagename/bcm2710-rpi-3-b-plus.dtb ]; then
-		cp -r "$tmpdir/usr/lib/$linux_packagename/bcm2710-rpi-3-b-plus.dtb" "$tmpdir/$boot_path/bcm2710-rpi-3-b-plus.dtb"
-	fi
-	if [ -f $tmpdir/usr/lib/$linux_packagename/bcm2710-rpi-3-b.dtb ]; then
-		cp -r "$tmpdir/usr/lib/$linux_packagename/bcm2710-rpi-3-b.dtb" "$tmpdir/$boot_path/bcm2710-rpi-3-b.dtb"
+	# path 1
+	if [ -f $tmpdir/usr/lib/$linux_packagename/bcm2709-rpi-2-b.dtb ]; then
+		cp -r "$tmpdir/usr/lib/$linux_packagename/bcm2709-rpi-2-b.dtb" "$tmpdir/$boot_path/bcm2709-rpi-2-b.dtb"
 	fi
 	if [ -f $tmpdir/usr/lib/$linux_packagename/bcm2710-rpi-2-b.dtb ]; then
 		cp -r "$tmpdir/usr/lib/$linux_packagename/bcm2710-rpi-2-b.dtb" "$tmpdir/$boot_path/bcm2710-rpi-2-b.dtb"
-	fi
-	if [ -f $tmpdir/usr/lib/$linux_packagename/bcm2709-rpi-2-b.dtb ]; then
-		cp -r "$tmpdir/usr/lib/$linux_packagename/bcm2709-rpi-2-b.dtb" "$tmpdir/$boot_path/bcm2709-rpi-2-b.dtb"
 	fi
 	if [ -f $tmpdir/usr/lib/$linux_packagename/bcm2710-rpi-zero-2.dtb ]; then
 		cp -r "$tmpdir/usr/lib/$linux_packagename/bcm2710-rpi-zero-2.dtb" "$tmpdir/$boot_path/bcm2710-rpi-zero-2.dtb"
@@ -221,12 +221,15 @@ if [ "$board_series" = "rpi-3" ] || [ "$board_series" = "rpi-2+3" ]; then
 	if [ -f $tmpdir/usr/lib/$linux_packagename/bcm2710-rpi-cm3.dtb ]; then
 		cp -r "$tmpdir/usr/lib/$linux_packagename/bcm2710-rpi-cm3.dtb" "$tmpdir/$boot_path/bcm2710-rpi-cm3.dtb"
 	fi
-	# arm64
-	if [ -f $tmpdir/usr/lib/$linux_packagename/broadcom/bcm2710-rpi-3-b-plus.dtb ]; then
-		cp -r "$tmpdir/usr/lib/$linux_packagename/broadcom/bcm2710-rpi-3-b-plus.dtb" "$tmpdir/$boot_path/bcm2710-rpi-3-b-plus.dtb"
+	if [ -f $tmpdir/usr/lib/$linux_packagename/bcm2710-rpi-3-b.dtb ]; then
+		cp -r "$tmpdir/usr/lib/$linux_packagename/bcm2710-rpi-3-b.dtb" "$tmpdir/$boot_path/bcm2710-rpi-3-b.dtb"
 	fi
-	if [ -f $tmpdir/usr/lib/$linux_packagename/broadcom/bcm2710-rpi-3-b.dtb ]; then
-		cp -r "$tmpdir/usr/lib/$linux_packagename/broadcom/bcm2710-rpi-3-b.dtb" "$tmpdir/$boot_path/bcm2710-rpi-3-b.dtb"
+	if [ -f $tmpdir/usr/lib/$linux_packagename/bcm2710-rpi-3-b-plus.dtb ]; then
+		cp -r "$tmpdir/usr/lib/$linux_packagename/bcm2710-rpi-3-b-plus.dtb" "$tmpdir/$boot_path/bcm2710-rpi-3-b-plus.dtb"
+	fi
+	# path 2
+	if [ -f $tmpdir/usr/lib/$linux_packagename/broadcom/bcm2709-rpi-2-b.dtb ]; then
+		cp -r "$tmpdir/usr/lib/$linux_packagename/broadcom/bcm2709-rpi-2-b.dtb" "$tmpdir/$boot_path/bcm2709-rpi-2-b.dtb"
 	fi
 	if [ -f $tmpdir/usr/lib/$linux_packagename/broadcom/bcm2710-rpi-2-b.dtb ]; then
 		cp -r "$tmpdir/usr/lib/$linux_packagename/broadcom/bcm2710-rpi-2-b.dtb" "$tmpdir/$boot_path/bcm2710-rpi-2-b.dtb"
@@ -240,14 +243,15 @@ if [ "$board_series" = "rpi-3" ] || [ "$board_series" = "rpi-2+3" ]; then
 	if [ -f $tmpdir/usr/lib/$linux_packagename/broadcom/bcm2710-rpi-cm3.dtb ]; then
 		cp -r "$tmpdir/usr/lib/$linux_packagename/broadcom/bcm2710-rpi-cm3.dtb" "$tmpdir/$boot_path/bcm2710-rpi-cm3.dtb"
 	fi
+	if [ -f $tmpdir/usr/lib/$linux_packagename/broadcom/bcm2710-rpi-3-b.dtb ]; then
+		cp -r "$tmpdir/usr/lib/$linux_packagename/broadcom/bcm2710-rpi-3-b.dtb" "$tmpdir/$boot_path/bcm2710-rpi-3-b.dtb"
+	fi
+	if [ -f $tmpdir/usr/lib/$linux_packagename/broadcom/bcm2710-rpi-3-b-plus.dtb ]; then
+		cp -r "$tmpdir/usr/lib/$linux_packagename/broadcom/bcm2710-rpi-3-b-plus.dtb" "$tmpdir/$boot_path/bcm2710-rpi-3-b-plus.dtb"
+	fi
 fi
 if [ "$board_series" = "rpi" ]; then
-	if [ -f $tmpdir/usr/lib/$linux_packagename/bcm2708-rpi-zero-w.dtb ]; then
-		cp -r "$tmpdir/usr/lib/$linux_packagename/bcm2708-rpi-zero-w.dtb" "$tmpdir/$boot_path/bcm2708-rpi-zero-w.dtb"
-	fi
-	if [ -f $tmpdir/usr/lib/$linux_packagename/bcm2708-rpi-zero.dtb ]; then
-		cp -r "$tmpdir/usr/lib/$linux_packagename/bcm2708-rpi-zero.dtb" "$tmpdir/$boot_path/bcm2708-rpi-zero.dtb"
-	fi
+	# path 1
 	if [ -f $tmpdir/usr/lib/$linux_packagename/bcm2708-rpi-b.dtb ]; then
 		cp -r "$tmpdir/usr/lib/$linux_packagename/bcm2708-rpi-b.dtb" "$tmpdir/$boot_path/bcm2708-rpi-b.dtb"
 	fi
@@ -256,6 +260,28 @@ if [ "$board_series" = "rpi" ]; then
 	fi
 	if [ -f $tmpdir/usr/lib/$linux_packagename/bcm2708-rpi-b-rev1.dtb ]; then
 		cp -r "$tmpdir/usr/lib/$linux_packagename/bcm2708-rpi-b-rev1.dtb" "$tmpdir/$boot_path/bcm2708-rpi-b-rev1.dtb"
+	fi
+	if [ -f $tmpdir/usr/lib/$linux_packagename/bcm2708-rpi-zero.dtb ]; then
+		cp -r "$tmpdir/usr/lib/$linux_packagename/bcm2708-rpi-zero.dtb" "$tmpdir/$boot_path/bcm2708-rpi-zero.dtb"
+	fi
+	if [ -f $tmpdir/usr/lib/$linux_packagename/bcm2708-rpi-zero-w.dtb ]; then
+		cp -r "$tmpdir/usr/lib/$linux_packagename/bcm2708-rpi-zero-w.dtb" "$tmpdir/$boot_path/bcm2708-rpi-zero-w.dtb"
+	fi
+	# path 2
+	if [ -f $tmpdir/usr/lib/$linux_packagename/broadcom/bcm2708-rpi-b.dtb ]; then
+		cp -r "$tmpdir/usr/lib/$linux_packagename/broadcom/bcm2708-rpi-b.dtb" "$tmpdir/$boot_path/bcm2708-rpi-b.dtb"
+	fi
+	if [ -f $tmpdir/usr/lib/$linux_packagename/broadcom/bcm2708-rpi-b-plus.dtb ]; then
+		cp -r "$tmpdir/usr/lib/$linux_packagename/broadcom/bcm2708-rpi-b-plus.dtb" "$tmpdir/$boot_path/bcm2708-rpi-b-plus.dtb"
+	fi
+	if [ -f $tmpdir/usr/lib/$linux_packagename/broadcom/bcm2708-rpi-b-rev1.dtb ]; then
+		cp -r "$tmpdir/usr/lib/$linux_packagename/broadcom/bcm2708-rpi-b-rev1.dtb" "$tmpdir/$boot_path/bcm2708-rpi-b-rev1.dtb"
+	fi
+	if [ -f $tmpdir/usr/lib/$linux_packagename/broadcom/bcm2708-rpi-zero.dtb ]; then
+		cp -r "$tmpdir/usr/lib/$linux_packagename/broadcom/bcm2708-rpi-zero.dtb" "$tmpdir/$boot_path/bcm2708-rpi-zero.dtb"
+	fi
+	if [ -f $tmpdir/usr/lib/$linux_packagename/broadcom/bcm2708-rpi-zero-w.dtb ]; then
+		cp -r "$tmpdir/usr/lib/$linux_packagename/broadcom/bcm2708-rpi-zero-w.dtb" "$tmpdir/$boot_path/bcm2708-rpi-zero-w.dtb"
 	fi
 fi
 # Install overlays
@@ -300,6 +326,7 @@ if [ -d /$boot_path/overlays ]; then
 	rm -fdr /$boot_path/overlays;
 fi
 
+sync
 exit 0
 EOF
 chmod 755 "$tmpdir/DEBIAN/preinst"
@@ -365,6 +392,7 @@ cd /usr/src/linux-headers-$version
 echo -e "Compiling headers ..."
 clean_headers > /dev/null 2>&1
 
+sync
 exit 0
 EOF
 	chmod 755 "$kernel_headers_dir/DEBIAN/postinst"
@@ -379,6 +407,7 @@ set -e
 
 rm -fdr /usr/src/linux-headers-*
 
+sync
 exit 0
 EOF
 chmod 755 "$kernel_headers_dir/DEBIAN/preinst"

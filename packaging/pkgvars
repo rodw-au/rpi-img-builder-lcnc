@@ -1,5 +1,9 @@
 #!/bin/bash
 
+COMPRESSION="xz"
+LINUX_IMAGE="linux-image-${SERIES}"
+LINUX_HEADERS="linux-headers-${SERIES}"
+
 linux_packaging(){
 echo "# packaging variables" > "scripts/package/pkgvars"
 echo board_series='"'$BOARD_EXT'"' >> "scripts/package/pkgvars"
@@ -8,7 +12,4 @@ echo linux_packagename='"'$LINUX_IMAGE'"' >> "scripts/package/pkgvars"
 echo headers_packagename='"'$LINUX_HEADERS'"' >> "scripts/package/pkgvars"
 echo compression='"'$COMPRESSION'"' >> "scripts/package/pkgvars"
 echo boot_path='"'boot/broadcom'"' >> "scripts/package/pkgvars"
-if [[ `ls ../../packaging/patches/*.patch` ]] > /dev/null 2>&1; then
-	for i in ../../packaging/patches/*.patch; do patch -p1 < $i; done > /dev/null 2>&1
-fi
 }

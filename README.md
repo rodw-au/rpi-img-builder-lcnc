@@ -72,12 +72,8 @@ Linux kernel
 Branch:			# Supported: 6.1.y and above
 Build:			# Kernel build version number
 Menuconfig:		# Kernel menuconfig
-
-Compiler        	WARNING: Only one may be selected
-Version:		# gcc-11
-GCC:			#
-Ccache:			#
-Clang:			# Supported: Debian Bookworm / Jammy Jellyfish
+Compiler:		# GNU Compiler Collection / Clang
+Ccache:			# Compiler cache
 
 Distribution
 Distro:			# Supported: debian, devuan and ubuntu
@@ -116,9 +112,8 @@ MOTD="Raspberry Pi"
 ```
 
 #### User defconfig
-
 ```sh
-# config placement: defconfig/$NAME_defconfig
+# Config placement: defconfig/$NAME_defconfig
 The config menu will append _defconfig to the end of the name
 in the userdata.txt file.
 ```
@@ -127,6 +122,13 @@ in the userdata.txt file.
 
 ```sh
 Patches "-p1" placed in userpatches are applied during compilation.
+```
+
+#### Preferred commit
+```sh
+# Example
+ENABLE_COMMIT="1"
+COMMIT="9ed4f05ba2e2bcd9065831674e97b2b1283e866d"
 ```
 
 ### Usage

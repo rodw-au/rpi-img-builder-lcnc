@@ -59,7 +59,7 @@ EEPROM_VERSION=$(curl --silent -L ${CHANGELOG} | awk '{if (NR==10) {print substr
 if [[ `wget -S --spider ${ERURL}rpi-eeprom_${EEPROM_VERSION}.orig.tar.gz 2>&1 | grep 'HTTP/1.1 200 OK'` ]]; then
 	download_eeprom
 else
-	EEPROM_VERSION="13.12"
+	EEPROM_VERSION="16.1"
 	download_eeprom
 fi
 }
@@ -69,7 +69,7 @@ wget -cq --show-progress ${ERURL}rpi-eeprom_${EEPROM_VERSION}-1.debian.tar.xz
 wget -cq --show-progress ${ERURL}rpi-eeprom_${EEPROM_VERSION}.orig.tar.gz
 }
 
-bcm2711_eeprom(){
+eeprom_support(){
 ERURL="https://archive.raspberrypi.org/debian/pool/main/r/rpi-eeprom/"
 CHANGELOG="https://raw.githubusercontent.com/raspberrypi/rpi-eeprom/debian/bullseye/debian/changelog"
 echo ""
@@ -188,8 +188,8 @@ EOF
 # user scripts
 uscripts_pre-stage1(){
 if [[ -f "files/userscripts/uscripts" ]]; then
-	if [[ `grep -w "run_function0" "files/userscripts/uscripts"` ]]; then
-		source files/userscripts/uscripts
+	source files/userscripts/uscripts
+	if [[ `type run_function0` ]] &>/dev/null; then
 		run_function0
 	fi
 fi
@@ -199,16 +199,10 @@ uscripts_stage1(){
 if [[ -f "files/userscripts/uscripts" ]]; then
 	mkdir -p p2/root/userscripts
 	cp -fr files/userscripts/* p2/root/userscripts/
-	if [ -f p2/root/userscripts/README.md ]; then
+	if [[ -f "p2/root/userscripts/README.md" ]]; then
 		rm -f p2/root/userscripts/README.md
 	fi
-	if [[ `grep -w "run_function1" "files/userscripts/uscripts"` ]]; then
-		if [[ `grep -w "run_function0" "files/userscripts/uscripts"` ]]; then
-			# file already sourced
-			:;
-		else
-			source files/userscripts/uscripts
-		fi
+	if [[ `type run_function1` ]] &>/dev/null; then
 		run_function1
 	fi
 fi
@@ -216,15 +210,23 @@ fi
 
 uscripts_stage2(){
 if [[ -f "/root/userscripts/uscripts" ]]; then
-	if [[ `grep -w "run_function2" "/root/userscripts/uscripts"` ]]; then
-		echo -e "\e[1;33mRunning user scripts\e[0m."
-		source /root/userscripts/uscripts
+	source /root/userscripts/uscripts
+	if [[ `type run_function2` ]] &>/dev/null; then
+		echo ""
+		echo -e "\033[1mRunning user scripts\e[0m ..."
 		run_function2
-		echo -e "\e[1;33mDone\e[0m."
+		echo -e "\033[1mDone\e[0m."
 	fi
 fi
-if [[ -e "/root/userscripts" ]]; then
-	rm -fdr /root/userscripts
+if [[ -e "/root/userscripts" ]]; then rm -fdr /root/userscripts; fi
+}
+
+uscripts_fin-stage1(){
+if [[ -f "files/userscripts/uscripts" ]]; then
+	source files/userscripts/uscripts
+	if [[ `type run_function3` ]] &>/dev/null; then
+		run_function3
+	fi
 fi
 }
 
