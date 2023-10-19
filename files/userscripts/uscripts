@@ -13,65 +13,23 @@ rm -f /p2/etc/sudoers.d/010_${USERNAME}-nopasswd
 echo "run_function 1 completed" 
 }
 
-
-
-
 run_function2 (){
 
-# Install the Linuxcnc Debs
+# Get the Linuxcnc Debs
+    echo "downloading linuxcnc debs" 
+	mkdir -p /tmp/linuxcnc/
+	cd /tmp/linuxcnc/
+    wget https://www.linuxcnc.org/dists/bookworm/2.9-uspace/binary-arm64/linuxcnc-doc-de_2.9.1_all.deb
+    wget https://www.linuxcnc.org/dists/bookworm/2.9-uspace/binary-arm64/linuxcnc-doc-en_2.9.1_all.deb
+    wget https://www.linuxcnc.org/dists/bookworm/2.9-uspace/binary-arm64/linuxcnc-doc-es_2.9.1_all.deb
+    wget https://www.linuxcnc.org/dists/bookworm/2.9-uspace/binary-arm64/linuxcnc-doc-fr_2.9.1_all.deb
+    wget https://www.linuxcnc.org/dists/bookworm/2.9-uspace/binary-arm64/linuxcnc-doc-zh-cn_2.9.1_all.deb
+    wget https://www.linuxcnc.org/dists/bookworm/2.9-uspace/binary-arm64/linuxcnc-uspace-dbgsym_2.9.1_arm64.deb
+    wget https://www.linuxcnc.org/dists/bookworm/2.9-uspace/binary-arm64/linuxcnc-uspace-dev_2.9.1_arm64.deb
+    wget https://www.linuxcnc.org/dists/bookworm/2.9-uspace/binary-arm64/linuxcnc-uspace_2.9.1_arm64.deb
 
-# if the linuxcnc folder exists
-#if [[ `ls /tmp/devel/linuxcnc-dev/scripts/rip-environment` ]]; then
-	## move to linuxcnc-dev/src folder
-	#echo "linuxcnc-dev  found, executing git pull"
-	#cd /tmp/devel/linuxcnc-dev/src
-	#git pull
-	## return to linuxcnc-dev folder
-	#cd  ..
-#else
-	## Linuxcnc does not exist so clone it
-	#mkdir -p /tmp/devel/
-	#cd /tmp/devel/
-	#echo "linuxcnc-dev not found, executing git clone"
-	#git clone https://github.com/LinuxCNC/linuxcnc.git linuxcnc-dev
-	#cd linuxcnc-dev/srcgit clone https://github.com/LinuxCNC/linuxcnc.git linuxcnc-dev
-	#cd linuxcnc-dev/src
-	##git checkout 2.9
-	## move to linuxcnc-dev/debian folder
-	#cd ../debian
-	##./configure no-docs	
-	#./configure
-	#cd ..
-#fi
-# Should now be in linuxcnc-dev folder
-
-# Lets build linuxcnc in/tmp/devel/linuxcnc-dev/src
-
-if [["$CLONE_IN_ROOTFS" == "0"]]; then  # We have not cloned thee source in ROOTFS
-	# we need to clone linuxcnc
-	rm -rf /tmp/devel
-	mkdir -p /tmp/devel/
-	cd /tmp/devel/
-	git clone https://github.com/LinuxCNC/linuxcnc.git linuxcnc-dev
-else                                    # We have cloned thee source in ROOTFS to speed things up, we just need to pull the latest source
-	cd /tmp/devel/linuxcnc-dev
-	git pull
-fi
-cd /tmp/devel/linuxcnc-dev/
-git checkout "$BRANCH"                 # Check out the beanch requested
-cd ./debian
-### NOTE: Building with $BUILD_DOCS" == "1" will fail if ROOTFS was built with "$BUILD_DOCS" == "0" as dependencies will be missing
-if [[ "$BUILD_DOCS" == "1" ]]; then    # We will build the docs
-	./configure
-else
-	./configure no-docs	               # Skip building docs
-fi
-cd ..
-echo "Building linuxcnc with dpkg-buildpackage " 
-dpkg-buildpackage -b -uc -j$(nproc)
 echo "installing linuxcnc debs" 
-cd ..                                  # now in /tmp/devel folder
-FILES="./*.deb"                        # we want to dynamically install packagesa in case the file names change
+FILES="/tmp/linuxcnc/*.deb" 
 for f in $FILES                        # We need to install debs in the right order and we don't want debug symbols
 do
   if [[  $f == *dbgsym*.deb ]] 
@@ -84,21 +42,18 @@ do
     continue      
   fi   
   echo "Installing $f" # linuxcnc-uspace
-  dpkg -i "$f"          #dpkg will fail if dependencies are not installed in ROOTFS
+  dpkg -i "$f"          #dpkg will fail if dependencies are not installed 
 done
 echo "Installing $g"   # linuxcnc-uspace-dev
 dpkg -i "$g"
 
 # Finished!
 echo "Stage 2 All done installing linuxcnc!"
+cd /tmp/
+rm -rf /tmp/linuxcnc 
 }
 
 run_function3 (){
-echo "Entering run_function3"	
-# Copy debs to output
-if [[ `ls p2/tmp/devel/*.deb` ]]; then
-    mkdir -p output/${BOARD}/linuxcnc
-	cp -fr p2/tmp/devel/*.deb output/${BOARD}/linuxcnc  # copy linuxcnc debs to the output folder
-	rm -rf p2/tmp/devel                                 # remove /tmp/devel folder which includes linuxcnc-dev to keep image size down
-fi
+echo "Entering run_function3 - nothing to do"	
+
 }
