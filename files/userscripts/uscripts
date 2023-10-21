@@ -8,7 +8,7 @@ fi
 }
 run_function1 (){
 
-# move sudo no password
+# remove sudo no password
 rm -f /p2/etc/sudoers.d/010_${USERNAME}-nopasswd
 echo "run_function 1 completed" 
 }
@@ -30,7 +30,7 @@ wget https://www.linuxcnc.org/dists/bookworm/2.9-uspace/binary-arm64/linuxcnc-do
 wget https://www.linuxcnc.org/dists/bookworm/2.9-uspace/binary-arm64/linuxcnc-uspace-dbgsym_2.9.1_arm64.deb
 wget https://www.linuxcnc.org/dists/bookworm/2.9-uspace/binary-arm64/linuxcnc-uspace-dev_2.9.1_arm64.deb
 wget https://www.linuxcnc.org/dists/bookworm/2.9-uspace/binary-arm64/linuxcnc-uspace_2.9.1_arm64.deb
-
+wget https://linuxcnc.org/dists/bookworm/base/binary-arm64/mesaflash_3.4.9-1_arm64.deb
 echo "installing linuxcnc debs" 
 FILES="/tmp/linuxcnc/*.deb" 
 for f in $FILES                        # We need to install debs in the right order and we don't want debug symbols
@@ -43,12 +43,19 @@ do
   then
     g=$f               # save linuxcnc-uspace-dev file name and install it last
     continue      
-  fi   
+  fi  
+  if [[  $f == *mesaflash*.deb ]] 
+  then
+    h=$f               # save mesaflash file name and install it after linuxcnc-uspace-dev
+    continue      
+  fi    
   echo "Installing $f" # linuxcnc-uspace
   dpkg -i "$f"          #dpkg will fail if dependencies are not installed 
 done
 echo "Installing $g"   # linuxcnc-uspace-dev
 dpkg -i "$g"
+echo "Installing $h"   # mesaflash
+dpkg -i "$h"
 
 # Install companion repositories
 
