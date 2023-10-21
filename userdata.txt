@@ -6,10 +6,8 @@ ROOTPASSWD="0"
 VERSION="6.1.y"
 BUILD_VERSION="1"
 MENUCONFIG="0"
-GCC_VERSION="gcc-12"
-### COMPILER
+COMPILER="gcc-12"
 CCACHE="1"
-CLANG="0"
 ### DISTRIBUTION
 DISTRO="debian"
 DISTRO_VERSION="bookworm"
@@ -22,21 +20,12 @@ DEVROOTFS="1"
 COMPRESS_IMG="1"
 USCRIPTS="1"
 USERACCT="0"
-USER_PKGS="htop libsensors-dev xfce4 xfce4-terminal xfce4-power-manager geany firefox-esr konsole xdg-utils python3-serial python3-yapps librsvg2-dev python3-pil python3-pil.imagetk python3 libboost-python1.74.0 libboost-python1.74.0-py311 libc6 libcairo2 libedit2 libepoxy0 libgcc-s1 libglib2.0-0 libgpiod2 libgtk-3-0 libgtk2.0-0 libmodbus5  libpango-1.0-0 libpangocairo-1.0-0 libpython3.11 libstdc++6 libtirpc3 libtk8.6 libudev1 libusb-1.0-0 libx11-6 libxinerama1 libxmu6 libudev-dev iptables blt mesa-utils python3-tk python3-numpy python3-cairo python3-gi-cairo python3-opengl python3-configobj python3-xlib libgtksourceview-3.0-dev tcl8.6 tk8.6 bwidget tclreadline tclx python3-pyqt5 python3-pyqt5.qsci python3-pyqt5.qtsvg python3-pyqt5.qtopengl python3-opencv python3-dbus python3-espeak python3-dbus.mainloop.pyqt5 python3-pyqt5.qtwebengine python3-pyqt5.qtwebkit espeak-ng pyqt5-dev-tools gstreamer1.0-tools espeak sound-theme-freedesktop python3-poppler-qt5 procps psmisc udev"
-### linuxCNC custom  Variables
-#DOC_PKGS="dvipng fonts-dejavu graphviz groff inkscape python3-lxml source-highlight texlive-font-utils texlive-lang-cyrillic texlive-lang-european texlive-lang-french texlive-lang-german texlive-lang-polish texlive-lang-spanish w3c-linkchecker"
-BUILD_DOCS="0"
-#BRANCH="master"
-#CLONE_IN_ROOTFS="1"
-### End linuxCNC custom  Variables
+USER_PKGS="htop libsensors-dev xfce4 xfce4-terminal xfce4-power-manager geany firefox-esr konsole curl" 
 ### CUSTOM LINUX KERNEL
 ENABLE_COMMIT="1"
 COMMIT="fad58933544bb2a7b7db92847c25c79a83171fa6"
-### CLANG/LLVM
-CLANG_VERSION="clang-15"
-CLANG_LLVM="LLVM=-15 LLVM_IAS=1"
 ### COMPILER TUNING
-CORES=$(nproc)
+CORES=`nproc`
 CFLAGS=""
 ### WHOAMI AND HOST
 KBUSER="$USER"
@@ -48,8 +37,8 @@ export LANGUAGE=en_US.UTF-8
 export LANG=en_US.UTF-8
 export LC_ALL=C.UTF-8
 locale-gen en_US.UTF-8
-### TIMEZONE
 }
+### TIMEZONE
 set_timezone(){
 ln -snf /usr/share/zoneinfo/Australia/Brisbane /etc/localtime
 echo -n 'Australia/Brisbane' > /etc/timezone
@@ -58,8 +47,7 @@ echo -n 'Australia/Brisbane' > /etc/timezone
 NAMESERVER1="8.8.8.8"
 NAMESERVER2="8.8.4.4"
 ### EXTRA WIRELESS
+RTW88="0"
 RTL88XXAU="0"
-RTL88X2BU="0"
-RTL88XXCU="0"
 ### DO NOT EDIT BELOW THIS LINE
-builder=5.6
+builder=5.8

@@ -4,15 +4,6 @@
 * Please read and follow steps in instructions.txt
 * This builder creates a kernel from  the Raspberry Pi repositories then
 * Creates a Debian 12 (Bookworm) image ready to burn to a USB stick.
-* **NOTE:** Linuxcnc is normally cloned in the ROOTFS section so secondary runs just do a git pull
-
-### Linuxcnc specific FLAGS in userdata.txt
-
-* DOC_PKGS="pkg1,pkg2,.. " # Packages to include if building docs
-* BUILD_DOCS="1"           # True if to Build the Linuxcnc docs
-* BRANCH="master"          # Branch to build (set to "2.9" to build 2.9 branch)
-* CLONE_IN_ROOTFS="1"      # If true, we will clone Linuxcnc source when building ROOTFS to save time on rebuilds
-* **NOTE:** Building the docs substantially increases the build time.
 
 ### The boards and distributions that are currently supported
 * **Raspberry Pi 4B/400** (*Debian, Devuan and Ubuntu*)
