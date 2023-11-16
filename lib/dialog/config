@@ -1,12 +1,18 @@
 #!/bin/bash
 
-BUILDER="5.8"
+BUILDER="6.0"
 GCC=`ls -ls /usr/bin/gcc | sed 's/.*\(..\)/\1/' | sed 's/ //g'`
 ARCH=`uname -m`
+MYNAME=`echo $USER | sed -e "s/\b\(.\)/\u\1/g"`
 
-NAME=""
-USERNAME=""
-PASSWORD=""
+NAME="$MYNAME"
+USERNAME="$USER"
+PASSWORD="board"
+CCACHE="0"
+NETWORKMANAGER="1"
+RTW88="0"
+RTL88XXAU="0"
+USERACCT="0"
 LOCALE="en_US.UTF-8"
 TIMEZONE="America/New_York"
 USER_NAMESERVER1="8.8.8.8"
@@ -20,17 +26,14 @@ VERSION="6.1.y"
 BUILD_VERSION="1"
 MENUCONFIG="0"
 COMPILER="gcc-$GCC"
-CCACHE="0"
 DISTRO="debian"
 DISTRO_VERSION="bookworm"
-NETWORKMANAGER="1"
 CUSTOM_DEFCONFIG="0"
 MYCONFIG=""
 VERBOSE="0"
 DEVROOTFS="1"
 COMPRESS_IMG="0"
 USCRIPTS="0"
-USERACCT="0"
 
 # open fd
 exec 3>&1
@@ -97,8 +100,8 @@ echo 'ENABLE_COMMIT="0"' >> tmp0
 echo 'COMMIT=""' >> tmp0
 echo CORES=\`nproc\` >> tmp0
 echo 'CFLAGS=""' >> tmp0
-echo 'KBUSER="$USER"' >> tmp0
-echo 'KBHOST="raspberrypi"' >> tmp0
+echo 'KBUSER="playboy"' >> tmp0
+echo 'KBHOST="penguin"' >> tmp0
 echo "set_locales(){" >> tmp0
 echo "apt install -y locales" >> tmp0
 echo "export LANGUAGE=${LOCALE}" >> tmp0
@@ -112,8 +115,8 @@ echo "echo -n '${TIMEZONE}' > /etc/timezone" >> tmp0
 echo "}" >> tmp0
 echo NAMESERVER1='"'${USER_NAMESERVER1}'"' >> tmp0
 echo NAMESERVER2='"'${USER_NAMESERVER2}'"' >> tmp0
-echo RTW88=0 >> tmp0
-echo RTL88XXAU=0 >> tmp0
+echo RTW88='"'${RTW88}'"' >> tmp0
+echo RTL88XXAU='"'${RTL88XXAU}'"' >> tmp0
 echo builder=${BUILDER} >> tmp0
 echo '"' > tmp2
 echo '"' >> tmp2
@@ -148,8 +151,8 @@ sed -i '52i### DO NOT EDIT BELOW THIS LINE' userdata.txt
 
 # customize your image
 custom_txt (){
-echo "# Default Image Size: 3072MB" > custom.txt
-echo 'IMGSIZE="3072MB"' >> custom.txt
+echo "# Image Size: 3072MB 3584MB 4096MB" > custom.txt
+echo 'IMGSIZE="4096MB"' >> custom.txt
 echo "" >> custom.txt
 echo "# Root Filesystem Types: ext4 btrfs xfs" >> custom.txt
 echo 'FSTYPE="ext4"' >> custom.txt
