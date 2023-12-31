@@ -13,45 +13,34 @@ DISTRO="debian"
 DISTRO_VERSION="bookworm"
 NETWORKMANAGER="1"
 ### CUSTOM KERNEL - Comment out the one not required
-CUSTOM_DEFCONFIG="1"
-MYCONFIG="linuxcnc-pi4_defconfig"
+CUSTOM_DEFCONFIG="0"
+#MYCONFIG="linuxcnc-pi4_defconfig"
 #MYCONFIG="linuxcnc-pi5_defconfig"
 VERBOSE="0"
 DEVROOTFS="1"
 COMPRESS_IMG="1"
 USCRIPTS="1"
 USERACCT="0"
-USER_PKGS="htop libsensors-dev xfce4 xfce4-terminal xfce4-power-manager geany firefox-esr konsole curl network-manager" 
+USER_PKGS="htop libsensors-dev xfce4 xfce4-terminal xfce4-power-manager geany firefox-esr konsole curl" 
 ### CUSTOM LINUX KERNEL - Comment out commits
 ENABLE_COMMIT="1"
-### Use this for Raspberry Pi 4b/400 (6.1.54)
-COMMIT="fad58933544bb2a7b7db92847c25c79a83171fa6"
-### Use this for the Pi 5 (6.1.69)
-#COMMIT= "aabc6f6d0b13ac177f9b383e59a542ddb6c32e59"
+COMMIT="342c7ee49e862edc30c893f141f55b9211b7a43b"
 ### COMPILER TUNING
 CORES=`nproc`
 CFLAGS=""
 ### WHOAMI AND HOST
-KBUSER="$USER"
+KBUSER="linuxcnc"
 KBHOST="raspberrypi"
-### LOCALES
-set_locales(){
-apt install -y locales
-export LANGUAGE=en_US.UTF-8
-export LANG=en_US.UTF-8
-export LC_ALL=C.UTF-8
-locale-gen en_US.UTF-8
-}
-### TIMEZONE
-set_timezone(){
-ln -snf /usr/share/zoneinfo/Australia/Brisbane /etc/localtime
-echo -n 'Australia/Brisbane' > /etc/timezone
-}
-### NAME SERVER
+
+### LOCALES TIMEZONE AND NAMESERVERS
+LOCALE="en_US.UTF-8"
+LOCALE_LC_ALL="C.UTF-8"
+TIMEZONE="Australia/Brisbane"
 NAMESERVER1="8.8.8.8"
 NAMESERVER2="8.8.4.4"
+
 ### EXTRA WIRELESS
 RTW88="0"
 RTL88XXAU="0"
 ### DO NOT EDIT BELOW THIS LINE
-builder=6.0
+BUILDER=6.2

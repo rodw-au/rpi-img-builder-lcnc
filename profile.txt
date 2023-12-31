@@ -1,0 +1,18 @@
+# User data defaults
+#NAME="Rod"
+#USERNAME="rod"
+#PASSWORD="board"
+#CCACHE="0"
+#NETWORKMANAGER="1"
+#RTW88="0"
+#RTL88XXAU="0"
+#USERACCT="0"
+#USER_PKGS="htop libsensors-dev rsyslog"
+#LOCALE="en_US.UTF-8"
+#LOCALE_LC_ALL="C.UTF-8"
+#TIMEZONE="America/New_York" 
+#NAMESERVER1="8.8.8.8"
+#NAMESERVER2="8.8.4.4"
+
+### DO NOT EDIT BELOW THIS LINE
+USER_PROFILE="1.0"
