@@ -1,5 +1,7 @@
-<img src="https://socialify.git.ci/pyavitz/rpi-img-builder/image?description=1&font=KoHo&forks=1&issues=1&logo=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fde%2Fthumb%2Fc%2Fcb%2FRaspberry_Pi_Logo.svg%2F475px-Raspberry_Pi_Logo.svg.png&owner=1&pattern=Charlie%20Brown&stargazers=1&theme=Dark" alt="rpi-img-builder" width="640" height="320" />
+<details>
+<summary><h3>Boards</h3></summary>
 
+<<<<<<< HEAD
 ### Linuxcnc users
 * Please read and follow steps in instructions.txt
 * This builder creates a kernel from  the Raspberry Pi repositories then
@@ -11,6 +13,19 @@
 * **Raspberry Pi 2/3/A/B/+** (*Debian, Devuan and Ubuntu*)
 * **Raspberry Pi 0/W/B/+** (*Debian and Devuan*)
 * [Raspberry Pi Hardware](https://www.raspberrypi.org/documentation/hardware/raspberrypi)
+=======
+```py
+Raspberry Pi Zero/W/1		bcm2708 / ARMEL
+Raspberry Pi Zero/W/2/3		bcm2709 / ARMHF
+Raspberry Pi Zero/W/2/3		bcm2710 / ARM64
+Raspberry Pi 4/400		bcm2711 / ARM64
+Raspberry Pi 4/400		bcm2711v7 / ARMHF
+Raspberry Pi 5			bcm2712 / ARM64
+```
+</details>
+
+[Raspberry Pi Hardware](https://www.raspberrypi.org/documentation/hardware/raspberrypi)
+>>>>>>> upstream/master
 
 ### Host dependencies for Debian Bullseye / Bookworm and Ubuntu Jammy Jellyfish
 * **Debian Bullseye** (recommended)
@@ -42,16 +57,13 @@ make dialogrc   # Set builder theme (optional)
 ```
 
 #### Command list
-* Raspberry Pi 4B/400 = bcm2711 (arm64) / bcm2711v7 (armhf)
-* Raspberry Pi 2/3/A/B/W/+ = bcm2710 (arm64) / bcm2709 (armhf)
-* Raspberry Pi 0/1/W = bcm2708 (armel)
 
 ```sh
-make all board=XXX	# Kernel > Rootfs > Image (run at own risk)
-make kernel board=XXX
-make commit board=XXX	# Linux source pulled from commmit
-make rootfs board=XXX
-make image board=XXX
+make list		# List boards
+make all board=xxx	# Kernel > rootfs > image
+make kernel board=xxx	# Builds linux kernel package
+make rootfs board=xxx	# Create rootfs tarball
+make image board=xxx	# Make bootable image
 ```
 
 #### Miscellaneous
@@ -102,11 +114,14 @@ User service:		# Create user during first boot (bypass the user information abov
 #### Customize image
 * custom.txt
 ```sh
-# Default Image Size: 3072MB
-IMGSIZE="3072MB"
+# Image Size
+IMGSIZE="4096MB"
 
 # Root Filesystem Types: ext4 btrfs xfs
 FSTYPE="ext4"
+
+# Shrink Image
+SHRINK="true"
 
 # Hostname
 HOSTNAME="raspberrypi"

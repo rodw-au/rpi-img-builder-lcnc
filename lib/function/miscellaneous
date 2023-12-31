@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # stage 1
-stage1_kernel(){
+stage1_kernel (){
 if [[ `ls ${OUTPUT}/{linux-image-*.deb,linux-headers-*.deb}` ]] > /dev/null 2>&1; then
 	cp ${OUTPUT}/*.deb p2/root
 else
@@ -14,7 +14,7 @@ fi
 }
 
 # stage 2
-raspberrypi_sys_mods(){
+raspberrypi_sys_mods (){
 echo ""
 echo "Installing raspi-sys-mods ..."
 git clone https://github.com/RPi-Distro/raspberrypi-sys-mods.git
@@ -45,7 +45,7 @@ fi
 }
 
 # rpi-eeprom
-find_eeprom(){
+find_eeprom (){
 EEPROM_VERSION=$(curl --silent -L ${CHANGELOG} | awk '{if (NR==1) {print substr($2, 1, length($2)-3)}}' | sed 's/[()]//g')
 if [[ `wget -S --spider ${ERURL}rpi-eeprom_${EEPROM_VERSION}.orig.tar.gz 2>&1 | grep 'HTTP/1.1 200 OK'` ]]; then
 	download_eeprom
@@ -54,31 +54,31 @@ else
 fi
 }
 
-finding_eeprom(){
+finding_eeprom (){
 EEPROM_VERSION=$(curl --silent -L ${CHANGELOG} | awk '{if (NR==10) {print substr($2, 1, length($2)-3)}}' | sed 's/[()]//g')
 if [[ `wget -S --spider ${ERURL}rpi-eeprom_${EEPROM_VERSION}.orig.tar.gz 2>&1 | grep 'HTTP/1.1 200 OK'` ]]; then
 	download_eeprom
 else
-	EEPROM_VERSION="16.1"
+	EEPROM_VERSION="20.1"
 	download_eeprom
 fi
 }
 
-download_eeprom(){
+download_eeprom (){
 wget -cq --show-progress ${ERURL}rpi-eeprom_${EEPROM_VERSION}-1.debian.tar.xz
 wget -cq --show-progress ${ERURL}rpi-eeprom_${EEPROM_VERSION}.orig.tar.gz
 }
 
-eeprom_support(){
+eeprom_support (){
 ERURL="https://archive.raspberrypi.org/debian/pool/main/r/rpi-eeprom/"
-CHANGELOG="https://raw.githubusercontent.com/raspberrypi/rpi-eeprom/debian/bullseye/debian/changelog"
+CHANGELOG="https://raw.githubusercontent.com/raspberrypi/rpi-eeprom/debian/bookworm/debian/changelog"
 echo ""
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 echo "Installing rpi-eeprom ..."
 apt install help2man rsync pciutils -y
 mkdir -p ~/eeprom
 mv -f rpi-eeprom-update.patch /root/eeprom/
-mv -f rpi-eeprom-control.patch /root/eeprom/
+mv -f rpi-eeprom-control /root/eeprom/
 cd ~/eeprom
 find_eeprom
 tar xf rpi-eeprom_${EEPROM_VERSION}.orig.tar.gz
@@ -87,10 +87,9 @@ rm -f rpi-eeprom_${EEPROM_VERSION}-1.debian.tar.xz
 mkdir -p debian/patches
 mv rpi-eeprom-update.patch debian/patches/rpi-eeprom-update.patch 
 echo rpi-eeprom-update.patch >> debian/patches/series
+rm -f debian/control; mv -f rpi-eeprom-control debian/control
 mv -f debian rpi-eeprom-${EEPROM_VERSION}/
-mv rpi-eeprom-control.patch rpi-eeprom-${EEPROM_VERSION}/
 cd rpi-eeprom-${EEPROM_VERSION}
-patch -p1 < rpi-eeprom-control.patch
 rm -f rpi-eeprom-control.patch
 dpkg-buildpackage -us -nc -uc
 cd ..
@@ -100,7 +99,7 @@ rm -fdr eeprom
 }
 
 # userland
-rpi_userland(){
+rpi_userland (){
 echo ""
 echo "Installing userland ..."
 rm -f /etc/profile
@@ -129,7 +128,7 @@ ldconfig
 }
 
 # modules
-bcm_modules(){
+bcm_modules (){
 rm -f /etc/modules
 tee /etc/modules <<EOF
 # /etc/modules: kernel modules to load at boot time.
@@ -144,7 +143,7 @@ chown root:root /etc/modules
 }
 
 # linux kernel
-stage2_kernel(){
+stage2_kernel (){
 echo ""
 echo "Installing kernel ..."
 apt update
@@ -162,16 +161,16 @@ if [ -f /usr/src/linux-headers-*/include/config/kernel.release ]; then
 else
 	KERNEL_RELEASE=`ls /boot/config-* | sed 's/\/boot\/config-//g'`
 fi
-echo -e INSTALLED_KERNEL='"'$KERNEL_RELEASE'"' > /root/kernel.txt
-# add fstype to the board.txt and kernel.txt file
-echo FSTYPE='"'${FSTYPE}'"' >> /root/kernel.txt
+echo -e INSTALLED_KERNEL='"'$KERNEL_RELEASE'"' > /root/kernel.release
+# add fstype to the board.txt and kernel.release file
+echo FSTYPE='"'${FSTYPE}'"' >> /root/kernel.release
 echo "" >> /etc/opt/board.txt
 echo "# filesystem" >> /etc/opt/board.txt
 echo FSTYPE='"'${FSTYPE}'"' >> /etc/opt/board.txt
 }
 
 # whiptail color palette (ubuntu)
-palette-dark(){
+palette-dark (){
 tee /etc/newt/palette.dark <<EOF
 root=,black
 checkbox=,black
@@ -186,7 +185,7 @@ EOF
 }
 
 # user scripts
-uscripts_pre-stage1(){
+uscripts_pre-stage1 (){
 if [[ -f "files/userscripts/uscripts" ]]; then
 	source files/userscripts/uscripts
 	if [[ `type run_function0` ]] &>/dev/null; then
@@ -195,7 +194,7 @@ if [[ -f "files/userscripts/uscripts" ]]; then
 fi
 }
 
-uscripts_stage1(){
+uscripts_stage1 (){
 if [[ -f "files/userscripts/uscripts" ]]; then
 	mkdir -p p2/root/userscripts
 	cp -fr files/userscripts/* p2/root/userscripts/
@@ -208,7 +207,7 @@ if [[ -f "files/userscripts/uscripts" ]]; then
 fi
 }
 
-uscripts_stage2(){
+uscripts_stage2 (){
 if [[ -f "/root/userscripts/uscripts" ]]; then
 	source /root/userscripts/uscripts
 	if [[ `type run_function2` ]] &>/dev/null; then
@@ -221,7 +220,7 @@ fi
 if [[ -e "/root/userscripts" ]]; then rm -fdr /root/userscripts; fi
 }
 
-uscripts_fin-stage1(){
+uscripts_fin-stage1 (){
 if [[ -f "files/userscripts/uscripts" ]]; then
 	source files/userscripts/uscripts
 	if [[ `type run_function3` ]] &>/dev/null; then
@@ -230,19 +229,8 @@ if [[ -f "files/userscripts/uscripts" ]]; then
 fi
 }
 
-# initrd script
-initrd_script(){
-cd ~
-if [[ -f "/root/99-initrd" ]]; then
-	mkdir -p /etc/initramfs/post-update.d/
-	mv -f 99-initrd /etc/initramfs/post-update.d/
-	chmod +x /etc/initramfs/post-update.d/99-initrd
-	chown root:root /etc/initramfs/post-update.d/99-initrd
-fi
-}
-
 # ubuntu apt preferences
-apt_preferences(){
+apt_preferences (){
 echo
 echo Blacking listing packages.
 tee /etc/apt/preferences <<EOF
@@ -253,82 +241,79 @@ EOF
 echo Done.
 }
 
-# defrag
-defrag_p2(){
-if [[ "$FSTYPE" == "ext4" ]]; then
-	e4defrag -c ${P_VALUE}
-fi
-if [[ "$FSTYPE" == "btrfs" ]]; then
-	btrfs filesystem defragment -f -r ${P_VALUE}
-fi
-if [[ "$FSTYPE" == "xfs" ]]; then
-	xfs_fsr ${P_VALUE}
-fi
-}
-
 # shrink
-ext4_shrink(){
-echo ""
-chmod +x scripts/shrink
-scripts/shrink -s ${BOARD_EXT}-${DISTRO}-${DISTRO_VERSION}-${IMAGE_DATE}.img
-echo 'LOOP1="/dev/mapper/' > kpart1
-echo 'LOOP2="/dev/mapper/' >> kpart1
+shrink (){
+RELEASE=`cat /etc/os-release | grep -w VERSION_CODENAME | sed 's/VERSION_CODENAME=//g'`
 IMAGE_FILE="${BOARD_EXT}-${DISTRO}-${DISTRO_VERSION}-${IMAGE_DATE}.img"
-kpartx="$(kpartx -av $IMAGE_FILE)"
-echo "$kpartx"
-if [[ `grep -w "VERSION_CODENAME=jammy" "/etc/os-release"` ]]; then
-	# snapd woes; grep for higher loop numbers
-	grep -o 'loop[0-9]\+p.' <<<"$kpartx" > kpart2;
+if [[ -f "${IMAGE_FILE}" ]]; then mv -f ${IMAGE_FILE} shrink.img; else echo "Shrink failed! Missing file ${IMAGE_FILE}."; exit 0; fi
+KPARTX="$(kpartx -av shrink.img)"
+if [[ "$RELEASE" == "jammy" ]]; then
+	# snapd woes; grep for higher loop numbers.
+	LOOP=`grep -o 'loop[0-9]\+p.' <<<"$KPARTX"`
 else
-	grep -o 'loop.p.' <<<"$kpartx" > kpart2;
+	LOOP=`grep -o 'loop.p.' <<<"$KPARTX"`
 fi
-echo '"' > kpart3
-echo '"' >> kpart3
-paste -d '\0' kpart1 kpart2 kpart3 > kpart.txt
-rm -f {kpart1,kpart2,kpart3}
-source kpart.txt
-BOOT="${LOOP1}"
-mkdir -p p1
-sleep 1s
-mount "${BOOT}" p1
-rm -f p1/cmdline.txt
-rm -f part-uuid.txt
-ROOTFS="${LOOP2}"
-ROOT_PARTUUID=$(blkid -o export -- ${ROOTFS} | sed -ne 's/^PARTUUID=//p')
-echo ROOT_PARTUUID='"'$ROOT_PARTUUID'"' > part-uuid.txt
-source part-uuid.txt
-cmdline > /dev/null 2>&1
+B_LOOP=`echo "$LOOP" | sed -n '1p'`
+R_LOOP=`echo "$LOOP" | sed -n '2p'`
+BOOT_LOOP="/dev/mapper/$B_LOOP"
+ROOTFS_LOOP="/dev/mapper/$R_LOOP"
+BOOT="${BOOT_LOOP}"
+ROOTFS="${ROOTFS_LOOP}"
+mkdir -p BOOT; mkdir -p ROOTFS
+sleep .50
+mount "${BOOT}" BOOT; mount "${ROOTFS}" ROOTFS
+sleep .50
+DU=`du -sm ROOTFS | sed 's/ROOTFS//g' | sed s/'\s'//g`
+if [[ "$FSTYPE" == "ext4" ]]; then IMGSIZE="$(($DU+1024))MB"; else IMGSIZE="$(($DU+1280))MB"; fi
+if [ $RAM -ne 0 ]; then IMAGE_FOLDER="ram/"; fi
+mkdir -p "$IMAGE_FOLDER"
+if [ $RAM -ne 0 ]; then mount -t tmpfs -o size=4G tmpfs $IMAGE_FOLDER; fi
+partition > /dev/null 2>&1; uuid
+echo ""
+echo -en "Shrinking ${PNK}[${FIN}${WHT}${IMGSIZE}${FIN}${PNK}]${FIN}"
+cp -fr BOOT/* p1/
+if [ $VERBOSE -eq 1 ]; then
+	if [[ "$FSTYPE" == "btrfs" ]]; then rsync -avhpzx --progress --stats --human-readable ROOTFS/@/ p2/; else rsync -avhpzx --progress --stats --human-readable ROOTFS/ p2/; fi
+else
+	if [[ "$FSTYPE" == "btrfs" ]]; then rsync -ahpzx ROOTFS/@/ p2/ > /dev/null; else rsync -ahpzx ROOTFS/ p2/ > /dev/null; fi
+fi
 sleep .75
-if [[ "$ARCH" == "arm" ]]; then
-	# remove 100mb file
-	mkdir -p p2
-	sleep .25
-	mount "${ROOTFS}" p2
-	rm -f p2/block.img
-	sleep .50
-	umount p2
-	sleep .50
-	rm -fdr p2
-fi
-umount p1
-rm -fdr p1
-kpartx -d ${IMAGE_FILE}
-rm -f kpart.txt
+echo -en " ${PNK}[${FIN}${YLW}cleaning${FIN}${PNK}]${FIN}"
+umount BOOT; umount ROOTFS
+sleep .75
+rm -fdr BOOT; rm -fdr ROOTFS
+kpartx -d shrink.img
+rm -f shrink.img
+fstab > /dev/null 2>&1
+cmdline > /dev/null 2>&1
+umount p2; umount p1
+losetup -d "${IMAGE_LOOP_DEV}"
+mv "${IMAGE_FOLDER}${IMAGE_FILE_NAME}" "${IMAGE_FILE_NAME}"
+if [ $RAM -ne 0 ]; then umount "${IMAGE_FOLDER}"; fi
+rmdir "${IMAGE_FOLDER}"
+rmdir p1 p2
+echo -e " ${PNK}[${FIN}${GRN}done${FIN}${PNK}]${FIN}"
 }
 
 # fin and compress
-finish_image(){
+finish_image (){
 IMAGE_TIME="$(date +%T | sed 's/://g' | sed 's/..$//')"
 IMAGE_FIN_NAME="${BOARD_EXT}-${DISTRO}-${DISTRO_VERSION}-${INSTALLED_KERNEL}-${ARCH_EXT}-${FSTYPE}-${IMAGE_DATE}-${IMAGE_TIME}.img"
 if [[ -f "${IMAGE_FILE_NAME}" ]]; then
 	mv -f ${IMAGE_FILE_NAME} ${IMAGE_FIN_NAME}
 fi
 if [ $COMPRESS_IMG -eq 1 ]; then
-	echo ""; echo_compress
-	xz -zev --threads=${CORES} ${IMAGE_FIN_NAME}
-	if [[ -f "${IMAGE_FIN_NAME}.xz" ]]; then
-		sha256sum ${IMAGE_FIN_NAME}.xz > ${IMAGE_FIN_NAME}.xz.sha256
-		sha256sum --check ${IMAGE_FIN_NAME}.xz.sha256
+	if [[ -f "${IMAGE_FIN_NAME}" ]]; then
+		echo -e ""
+		echo_compress
+		xz -zev --threads=${CORES} ${IMAGE_FIN_NAME}
+		if [[ -f "${IMAGE_FIN_NAME}.xz" ]]; then
+			sha256sum ${IMAGE_FIN_NAME}.xz > ${IMAGE_FIN_NAME}.xz.sha256
+			sha256sum --check ${IMAGE_FIN_NAME}.xz.sha256
+		fi
+	else
+		echo -e ""
+		echo -e "${IMAGE_FIN_NAME} not found?"
 	fi
 fi
 }
