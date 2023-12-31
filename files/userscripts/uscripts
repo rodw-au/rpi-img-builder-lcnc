@@ -15,53 +15,22 @@ echo "run_function 1 completed"
 
 run_function2 (){
 # Install Linuxcnc dependencies
-apt-get install -y xdg-utils python3-serial python3-yapps librsvg2-dev python3-pil python3-pil.imagetk python3 libboost-python1.74.0 libboost-python1.74.0-py311 libc6 libcairo2 libedit2 libepoxy0 libgcc-s1 libglib2.0-0 libgpiod2 libgtk-3-0 libgtk2.0-0 libmodbus5  libpango-1.0-0 libpangocairo-1.0-0 libpython3.11 libstdc++6 libtirpc3 libtk8.6 libudev1 libusb-1.0-0 libx11-6 libxinerama1 libxmu6 libudev-dev iptables blt mesa-utils python3-tk python3-numpy python3-cairo python3-gi-cairo python3-opengl python3-configobj python3-xlib libgtksourceview-3.0-dev tcl8.6 tk8.6 bwidget tclreadline tclx python3-pyqt5 python3-pyqt5.qsci python3-pyqt5.qtsvg python3-pyqt5.qtopengl python3-opencv python3-dbus python3-espeak python3-dbus.mainloop.pyqt5 python3-pyqt5.qtwebengine python3-pyqt5.qtwebkit espeak-ng pyqt5-dev-tools gstreamer1.0-tools espeak sound-theme-freedesktop python3-poppler-qt5 procps psmisc udev
+#apt-get install -y xdg-utils python3-serial python3-yapps librsvg2-dev python3-pil python3-pil.imagetk python3 libboost-python1.74.0 libboost-python1.74.0-py311 libc6 libcairo2 libedit2 libepoxy0 libgcc-s1 libglib2.0-0 libgpiod2 libgtk-3-0 libgtk2.0-0 libmodbus5  libpango-1.0-0 libpangocairo-1.0-0 libpython3.11 libstdc++6 libtirpc3 libtk8.6 libudev1 libusb-1.0-0 libx11-6 libxinerama1 libxmu6 libudev-dev iptables blt mesa-utils python3-tk python3-numpy python3-cairo python3-gi-cairo python3-opengl python3-configobj python3-xlib libgtksourceview-3.0-dev tcl8.6 tk8.6 bwidget tclreadline tclx python3-pyqt5 python3-pyqt5.qsci python3-pyqt5.qtsvg python3-pyqt5.qtopengl python3-opencv python3-dbus python3-espeak python3-dbus.mainloop.pyqt5 python3-pyqt5.qtwebengine python3-pyqt5.qtwebkit espeak-ng pyqt5-dev-tools gstreamer1.0-tools espeak sound-theme-freedesktop python3-poppler-qt5 procps psmisc udev
 
 # Get the Linuxcnc Debs
 
-echo "downloading linuxcnc debs" 
+echo "Installing linuxcnc" 
 mkdir -p /tmp/linuxcnc/
 cd /tmp/linuxcnc/
-wget https://www.linuxcnc.org/dists/bookworm/2.9-uspace/binary-arm64/linuxcnc-doc-de_2.9.1_all.deb
-wget https://www.linuxcnc.org/dists/bookworm/2.9-uspace/binary-arm64/linuxcnc-doc-en_2.9.1_all.deb
-wget https://www.linuxcnc.org/dists/bookworm/2.9-uspace/binary-arm64/linuxcnc-doc-es_2.9.1_all.deb
-wget https://www.linuxcnc.org/dists/bookworm/2.9-uspace/binary-arm64/linuxcnc-doc-fr_2.9.1_all.deb
-wget https://www.linuxcnc.org/dists/bookworm/2.9-uspace/binary-arm64/linuxcnc-doc-zh-cn_2.9.1_all.deb
-wget https://www.linuxcnc.org/dists/bookworm/2.9-uspace/binary-arm64/linuxcnc-uspace-dbgsym_2.9.1_arm64.deb
-wget https://www.linuxcnc.org/dists/bookworm/2.9-uspace/binary-arm64/linuxcnc-uspace-dev_2.9.1_arm64.deb
-wget https://www.linuxcnc.org/dists/bookworm/2.9-uspace/binary-arm64/linuxcnc-uspace_2.9.1_arm64.deb
-wget https://linuxcnc.org/dists/bookworm/base/binary-arm64/mesaflash_3.4.9-1_arm64.deb
-echo "installing linuxcnc debs" 
-FILES="/tmp/linuxcnc/*.deb" 
-for f in $FILES                        # We need to install debs in the right order and we don't want debug symbols
-do
-  if [[  $f == *dbgsym*.deb ]] 
-  then
-    continue      # Skip installing this deb file
-  fi
-  if [[  $f == *dev*.deb ]] 
-  then
-    g=$f               # save linuxcnc-uspace-dev file name and install it last
-    continue      
-  fi  
-  if [[  $f == *mesaflash*.deb ]] 
-  then
-    h=$f               # save mesaflash file name and install it after linuxcnc-uspace-dev
-    continue      
-  fi    
-  echo "Installing $f" # linuxcnc-uspace
-  dpkg -i "$f"          #dpkg will fail if dependencies are not installed 
-done
-echo "Installing $g"   # linuxcnc-uspace-dev
-dpkg -i "$g"
-echo "Installing $h"   # mesaflash
-dpkg -i "$h"
+gpg --homedir /tmp/linuxcnc/ --keyserver hkp://keyserver.ubuntu.com --recv-key 3cb9fd148f374fef
+gpg --homedir /tmp/linuxcnc/ --export 'EMC Archive Signing Key' | tee /usr/share/keyrings/linuxcnc.gpg > /dev/null
+echo 'deleting temp files'
 
-# Install companion repositories
+# Install companion repositories. NOTE: QTPYVCP does not support the raspberry pi.
 
 echo "Install ethercat repository"
-sudo mkdir -p /usr/local/share/keyrings/
-wget -O- https://build.opensuse.org/projects/science:EtherLab/signing_keys/download?kind=gpg | gpg --dearmor | sudo dd of=/etc/apt/trusted.gpg.d/science_EtherLab.gpg
+mkdir -p /usr/local/share/keyrings/
+wget -O- https://build.opensuse.org/projects/science:EtherLab/signing_keys/download?kind=gpg | gpg --dearmor | dd of=/etc/apt/trusted.gpg.d/science_EtherLab.gpg
 tee -a /etc/apt/sources.list.d/ighvh.sources > /dev/null <<EOT
 Types: deb
 Signed-By: /etc/apt/trusted.gpg.d/science_EtherLab.gpg
@@ -69,12 +38,45 @@ Suites: ./
 URIs: http://download.opensuse.org/repositories/science:/EtherLab/Debian_12/
 EOT
 
-echo  "Create the linuxcnc-ethercat.list file"
-cat << EOF > /etc/apt/sources.list.d/linuxcnc-ethercat.list
-deb [signed-by=/etc/apt/trusted.gpg.d/linuxcnc-ethercat.gpg] https://packagecloud.io/rodw-au/rodw-au/debian/ bookworm main
-deb-src [signed-by=/etc/apt/trusted.gpg.d/linuxcnc-ethercat.gpg] https://packagecloud.io/rodw-au/rodw-au/debian/ bookworm main
-EOF
-curl -fsSL "https://packagecloud.io/rodw-au/rodw-au/gpgkey" | gpg --dearmor > /etc/apt/trusted.gpg.d/linuxcnc-ethercat.gpg
+echo 'Updating apt repository list'
+echo deb [arch=amd64,arm64 signed-by=/usr/share/keyrings/linuxcnc.gpg] https://www.linuxcnc.org/ bookworm base 2.9-uspace | tee /etc/apt/sources.list.d/linuxcnc.list > /dev/null
+echo deb-src [arch=amd64,arm64 signed-by=/usr/share/keyrings/linuxcnc.gpg] https://www.linuxcnc.org/ bookworm base 2.9-uspace | tee -a /etc/apt/sources.list.d/linuxcnc.list > /dev/null
+
+tee -a /etc/apt/preferences.d/99linuxcnc-uspace.pref > /dev/null <<EOT
+package: linuxcnc-uspace
+pin: release o=https://www.linuxcnc.org/ bookworm base 2.9-uspace 
+Pin-Priority: 500
+
+package: linuxcnc-uspace-dev
+pin: release o=https://www.linuxcnc.org/ bookworm base 2.9-uspace 
+Pin-Priority: 500
+
+package: linuxcnc-uspace-doc-en
+pin: release o=https://www.linuxcnc.org/ bookworm base 2.9-uspace
+Pin-Priority: 500
+
+package: linuxcnc-uspace-doc-de
+pin: release o=https://www.linuxcnc.org/ bookworm base 2.9-uspace
+Pin-Priority: 500
+
+package: linuxcnc-uspace-doc-es
+pin: release o=https://www.linuxcnc.org/ bookworm base 2.9-uspace
+Pin-Priority: 500
+
+package: linuxcnc-uspace-doc-fr
+pin: release o=https://www.linuxcnc.org/ bookworm base 2.9-uspace 2.9-rt
+Pin-Priority: 500
+
+package: linuxcnc-uspace-doc-zh-cn
+pin: release o=https://www.linuxcnc.org/ bookworm base 2.9-uspace 2.9-rt
+Pin-Priority: 500
+EOT
+
+
+echo 'Updating APT index'
+apt-get update
+echo 'Installing LinuxCNC'
+apt-get install -y linuxcnc-uspace linuxcnc-uspace-dev mesaflash
 
 # Finished!
 echo "Stage 2 All done installing linuxcnc!"
@@ -84,11 +86,5 @@ rm -rf /tmp/linuxcnc
 
 run_function3 (){
 echo "Entering run_function3"	
-# Copy debs to output
-if [[ `ls p2/tmp/ethercat/*.deb` ]]; then
-    mkdir -p output/${BOARD}/ethercat
-	cp -fr p2/tmp/ethercat/*.deb output/${BOARD}/ethercat  # copy linuxcnc debs to the output folder
-	rm -rf p2/tmp/ethercat                                 # remove /tmp/ethercat folder to keep image size down
-fi
 }
 

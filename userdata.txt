@@ -5,25 +5,29 @@ ROOTPASSWD="0"
 ### LINUX KERNEL
 VERSION="6.1.y"
 BUILD_VERSION="1"
-MENUCONFIG="0"
+MENUCONFIG="1"
 COMPILER="gcc-12"
 CCACHE="1"
 ### DISTRIBUTION
 DISTRO="debian"
 DISTRO_VERSION="bookworm"
 NETWORKMANAGER="1"
-### CUSTOM
+### CUSTOM KERNEL - Comment out the one not required
 CUSTOM_DEFCONFIG="1"
-MYCONFIG="linuxcnc_defconfig"
+MYCONFIG="linuxcnc-pi4_defconfig"
+#MYCONFIG="linuxcnc-pi5_defconfig"
 VERBOSE="0"
 DEVROOTFS="1"
 COMPRESS_IMG="1"
 USCRIPTS="1"
 USERACCT="0"
-USER_PKGS="htop libsensors-dev xfce4 xfce4-terminal xfce4-power-manager geany firefox-esr konsole curl" 
-### CUSTOM LINUX KERNEL
+USER_PKGS="htop libsensors-dev xfce4 xfce4-terminal xfce4-power-manager geany firefox-esr konsole curl network-manager" 
+### CUSTOM LINUX KERNEL - Comment out commits
 ENABLE_COMMIT="1"
+### Use this for Raspberry Pi 4b/400 (6.1.54)
 COMMIT="fad58933544bb2a7b7db92847c25c79a83171fa6"
+### Use this for the Pi 5 (6.1.69)
+#COMMIT= "aabc6f6d0b13ac177f9b383e59a542ddb6c32e59"
 ### COMPILER TUNING
 CORES=`nproc`
 CFLAGS=""
@@ -50,4 +54,4 @@ NAMESERVER2="8.8.4.4"
 RTW88="0"
 RTL88XXAU="0"
 ### DO NOT EDIT BELOW THIS LINE
-builder=5.8
+builder=6.0
