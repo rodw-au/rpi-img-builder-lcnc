@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
 
@@ -90,30 +90,30 @@ fi
 # Some variables and settings used throughout the script
 version=$KERNELRELEASE
 if [ -n "$KDEB_PKGVERSION" ]; then
-	packageversion=$KDEB_PKGVERSION
-	revision=${packageversion##*-}
+	packageversion="$KDEB_PKGVERSION"
+	revision="${packageversion##*-}"
 else
 	revision=$(cat .version 2>/dev/null||echo 1)
-	packageversion=$version-$revision
+	packageversion="$version-$revision"
 fi
 sourcename="rpi-img-builder"
 # set by pkgvars
-packagename=$linux_packagename
-kernel_headers_packagename=$headers_packagename
+packagename="$linux_packagename"
+kernel_headers_packagename="$headers_packagename"
 # end of pkgvars
-dbg_packagename=$packagename-dbg
+dbg_packagename="$packagename-dbg"
 debarch=
 set_debarch
 
 if [ "$ARCH" = "um" ] ; then
-	packagename=user-mode-linux-$version
+	packagename="user-mode-linux-$version"
 fi
 
 email=${DEBEMAIL-$EMAIL}
 
 # use email string directly if it contains <email>
-if echo $email | grep -q '<.*>'; then
-	maintainer=$email
+if echo "$email" | grep -q '<.*>'; then
+	maintainer="$email"
 else
 	# or construct the maintainer string
 	user=${KBUILD_BUILD_USER-$(id -nu)}
@@ -140,7 +140,7 @@ fi
 mkdir -p debian/source/
 echo "2.0" > debian/source/format
 
-echo $debarch > debian/arch
+echo "$debarch" > debian/arch
 extra_build_depends=", $(if_enabled_echo CONFIG_UNWINDER_ORC libelf-dev:native)"
 extra_build_depends="$extra_build_depends, $(if_enabled_echo CONFIG_SYSTEM_TRUSTED_KEYRING libssl-dev:native)"
 
@@ -213,7 +213,7 @@ Description: Linux kernel debugging symbols for $version
 EOF
 
 cat <<EOF > debian/rules
-#!$(command -v $MAKE) -f
+#!$(command -v "$MAKE") -f
 
 srctree ?= .
 
