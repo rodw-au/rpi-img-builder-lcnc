@@ -3,29 +3,38 @@
 linux_compilers (){
 # install and setup compilers
 DEB_CLANG_DEPENDS="clang clang-14 clang-15 clang-16 lld lld-14 lld-15 lld-16 llvm"
-UBU_CLANG_DEPENDS="clang clang-14 clang-15 lld lld-14 lld-15 llvm"
+UBU_JAMMY_CLANG_DEPENDS="clang clang-14 clang-15 lld lld-14 lld-15 llvm"
+UBU_NOBLE_CLANG_DEPENDS="clang clang-14 clang-15 clang-16 clang-17 clang-18 lld lld-14 lld-15 lld-16 lld-17 lld-18 llvm"
+COMPILER_CLANG=`echo ${COMPILER} | sed 's/[0-9]//g' | sed 's/-//g'`
+if [[ "$COMPILER_CLANG" == "clang" ]]; then
+	if [[ "$HOST_CODENAME" == "bookworm" ]]; then
+		if [[ `command -v clang-14` ]] && [[ `command -v clang-15` ]] \
+		&& [[ `command -v clang-16` ]]; then :; else apt install -y ${DEB_CLANG_DEPENDS}; fi
+	fi
+	if [[ "$HOST_CODENAME" == "jammy" ]]; then
+		if [[ `command -v clang-14` ]] && [[ `command -v clang-15` ]]; then :; else apt install -y ${UBU_JAMMY_CLANG_DEPENDS}; fi
+	fi
+	if [[ "$HOST_CODENAME" == "noble" ]]; then
+		if [[ `command -v clang-14` ]] && [[ `command -v clang-15` ]] \
+		&& [[ `command -v clang-16` ]] && [[ `command -v clang-17` ]] \
+		&& [[ `command -v clang-18` ]]; then :; else apt install -y ${UBU_NOBLE_CLANG_DEPENDS}; fi
+	fi
+	# builder doesn't support compiling armel with clang
+	if [[ "$ARCH_EXT" == "armel" ]]; then COMPILER_CLANG="gcc"; COMPILER="gcc"; fi
+fi
 if [ $CCACHE -eq 1 ]; then
 	if [[ `command -v ccache` ]]; then :; else apt install -y ccache; fi
 fi
-if [[ "$COMPILER" == "clang" ]] && [[ "$HOST_CODENAME" == "bookworm" ]]; then COMPILER="clang-16"; fi
-if [[ "$COMPILER" == "clang" ]] && [[ "$HOST_CODENAME" == "jammy" ]]; then COMPILER="clang-15"; fi
-if [[ "$COMPILER" =~ ^(clang|clang-14|clang-15|clang-16)$ ]]; then
+# find compiler version
+if [[ "$COMPILER" =~ ^(clang|gcc)$ ]]; then
+	CVER=`readlink /usr/bin/${COMPILER} | sed "s/[^0-9.]*//g" | sed 's/\.//g'`
+	COMPILER="${COMPILER}-${CVER}"
+fi
+if [[ "$COMPILER_CLANG" == "clang" ]]; then
 	CLANG="1"
 	CLANG_LLVM=`echo LLVM=${COMPILER} LLVM_IAS=1 | sed 's/clang//g'`
 else
-	CLANG="0"	
-fi
-if [ $CLANG -eq 1 ]; then
-	if [[ "$HOST_CODENAME" == "bookworm" ]]; then
-		if [[ `command -v clang-14` ]] && [[ `command -v clang-15` ]] && [[ `command -v clang-16` ]]; then :; else apt install -y ${DEB_CLANG_DEPENDS}; fi
-	fi
-	if [[ "$HOST_CODENAME" == "jammy" ]]; then
-		if [[ `command -v clang-14` ]] && [[ `command -v clang-15` ]]; then :; else apt install -y ${UBU_CLANG_DEPENDS}; fi
-	fi
-	if [[ "$ARCH_EXT" == "armel" ]]; then
-		echo -e "The builder does not support using clang to build ${ARCH_EXT}."
-		exit 0
-	fi
+	CLANG="0"
 fi
 # compiler
 if [ $CCACHE -eq 1 ]; then

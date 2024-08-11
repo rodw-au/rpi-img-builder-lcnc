@@ -67,9 +67,7 @@ EOF
 
 ifupdown-setup(){
 rm -f /etc/network/interfaces
-if [[ "$DISTRO" == "devuan" ]]; then
-	if [[ "$BOARD" == "bcm2709" || "$BOARD" == "bcm2710" ]]; then eth_udev-rule; fi
-fi
+if [[ "$DISTRO" == "devuan" ]]; then if [[ "$BOARD" =~ ^(bcm2709|bcm2710)$ ]]; then eth_udev-rule; fi; fi
 if [[ "$DISTRO" == "ubuntu" ]]; then
 	if [[ "$DISTRO_VERSION" == "jammy" ]]; then
 		# /etc/network/if-down.d/resolved: 12: mystatedir: not found
@@ -132,9 +130,7 @@ EOF
 }
 
 networkmanager-setup(){
-if [ -f /etc/network/interfaces ]; then
-	rm -f /etc/network/interfaces
-fi
+rm -f /etc/network/interfaces
 tee /etc/network/interfaces <<EOF
 source /etc/network/interfaces.d/*
 
@@ -153,9 +149,7 @@ else
 	echo "[connection]" > /etc/NetworkManager/conf.d/default-wifi-powersave-on.conf
 	echo "wifi.powersave = 2" >> /etc/NetworkManager/conf.d/default-wifi-powersave-on.conf
 fi
-if [[ "$DISTRO" == "devuan" ]]; then
-	if [[ "$BOARD" == "bcm2709" || "$BOARD" == "bcm2710" ]]; then eth_udev-rule; fi
-fi
+if [[ "$DISTRO" == "devuan" ]]; then if [[ "$BOARD" =~ ^(bcm2709|bcm2710)$ ]]; then eth_udev-rule; fi; fi
 }
 
 ifupdown-credentials(){
@@ -180,7 +174,6 @@ if [[ -f "/root/ifupdown.credentials" ]]; then
 	echo 'NAMESERVERS=""' >> /boot/broadcom/credentials.txt
 	echo "" >> /boot/broadcom/credentials.txt
 	echo "# change hostname" >> /boot/broadcom/credentials.txt
-	echo 'CHANGE="false"' >> /boot/broadcom/credentials.txt
 	echo HOSTNAME='"'$CURRENT_HOSTNAME'"' >> /boot/broadcom/credentials.txt
 fi
 }
@@ -206,7 +199,6 @@ if [[ -f "/root/networkmanager.credentials" ]]; then
 	echo 'DNS=""' >> /boot/broadcom/credentials.txt
 	echo "" >> /boot/broadcom/credentials.txt
 	echo "# change hostname" >> /boot/broadcom/credentials.txt
-	echo 'CHANGE="false"' >> /boot/broadcom/credentials.txt
 	echo HOSTNAME='"'$CURRENT_HOSTNAME'"' >> /boot/broadcom/credentials.txt
 fi
 }

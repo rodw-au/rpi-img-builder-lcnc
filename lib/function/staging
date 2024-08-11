@@ -38,7 +38,7 @@ if [[ "$FSTYPE" == "ext4" ]]; then
 fi
 if [[ "$FSTYPE" == "btrfs" ]]; then
 	MAKE_ROOTFS="mkfs.btrfs -f -L ROOTFS ${IMAGE_LOOP_DEV_ROOTFS}"
-	MOUNT_ROOTFS="mount -o compress=lzo,noatime,subvol=@ ${IMAGE_LOOP_DEV_ROOTFS} p2;"
+	MOUNT_ROOTFS="mount -o compress=lzo,noatime,subvol=@ ${IMAGE_LOOP_DEV_ROOTFS} p2"
 	ROOTFS_TABLE="btrfs	defaults,compress=lzo,noatime,subvol=@ 0 1"
 	ROOTFSTYPE="rootfstype=btrfs rootflags=subvol=@"
 fi
@@ -153,30 +153,50 @@ enable_uart=0
 #dtoverlay=disable-bt
 #dtoverlay=pi3-disable-wifi
 #dtoverlay=pi3-disable-bt
+#dtoverlay=disable-wifi-pi5
+#dtoverlay=disable-bt-pi5
 
 # remove test rainbow
 disable_splash=1
 
 # disables the warning overlays
-#avoid_warnings=1
+avoid_warnings=1
+
+# gpio fan (headers)
+#dtoverlay=gpio-fan,gpiopin=12,temp=55000,hyst=2000
 
 [cm4]
-# Enable host mode on the 2711 built-in XHCI USB controller.
-# This line should be removed if the legacy DWC2 controller is required
-# (e.g. for USB device mode) or if USB support is not required.
 otg_mode=1
 
 [pi4]
-# Enable DRM VC4 V3D driver on top of the dispmanx display stack
-dtoverlay=vc4-kms-v3d
+dtoverlay=vc4-kms-v3d,cma-512
+#dtoverlay=vc4-kms-v3d-pi4
 #dtoverlay=vc4-fkms-v3d
 max_framebuffers=2
 arm_boost=1
+#disable_fw_kms_setup=1
 
-# USB boot requires high current (5 volt 5 amp) power supply.
-# To disable this check set usb_max_current_enable=1 in config.txt
-# or press the power button to temporarily enable usb_max_current_enable
-# and continue booting.
-#usb_max_current_enable=1
+[pi5]
+dtoverlay=vc4-kms-v3d,cma-512
+#dtoverlay=vc4-kms-v3d-pi5
+#dtoverlay=vc4-fkms-v3d
+max_framebuffers=0
+arm_boost=1
+usb_max_current_enable=1
+disable_fw_kms_setup=1
+
+# pwm fan
+#dtparam=fan_temp0=50000
+#dtparam=fan_temp0_hyst=2000
+#dtparam=fan_temp0_speed=75
+#dtparam=fan_temp1=55000
+#dtparam=fan_temp1_hyst=2000
+#dtparam=fan_temp1_speed=125
+#dtparam=fan_temp2=60000
+#dtparam=fan_temp2_hyst=3000
+#dtparam=fan_temp2_speed=175
+#dtparam=fan_temp3=65000
+#dtparam=fan_temp3_hyst=3000
+#dtparam=fan_temp3_speed=250
 EOF
 }

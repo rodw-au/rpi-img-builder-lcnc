@@ -7,30 +7,36 @@ if [ $VERBOSE -eq 1 ]; then set -x; fi
 if [[ -f "/root/services.txt" ]]; then source /root/services.txt; fi
 source /root/miscellaneous.txt
 source /root/networking.txt
-UNMINIMIZE=/usr/local/sbin/unminimize
 URL="https://raw.githubusercontent.com/pyavitz/scripts/master/"
 
 set -o errexit
 set -o pipefail
 set -o nounset
 
-if [ $NETWORKMANAGER -eq 0 ]; then
-	if [[ "$DISTRO_VERSION" == "jammy" ]]; then
-		# systemd-resolved breaks static ip when using ifupdown, disable on jammy jellyfish
-		unlink /etc/resolv.conf;
-		if [ -f /etc/resolv.conf ]; then
-			rm -f /etc/resolv.conf
-		fi
-		systemctl disable systemd-resolved
-	fi
-fi
-echo "nameserver ${NAMESERVER1}" > /etc/resolv.conf
-echo "nameserver ${NAMESERVER2}" >> /etc/resolv.conf
-
 mount -t proc proc proc/
 mount -t sysfs sys sys/
 
 export DEBIAN_FRONTEND="noninteractive"
+
+if [[ "$DISTRO" == "ubuntu" ]]; then rm -f /etc/resolv.conf; fi
+echo "nameserver ${NAMESERVER1}" > /etc/resolv.conf
+echo "nameserver ${NAMESERVER2}" >> /etc/resolv.conf
+
+if [ $NETWORKMANAGER -eq 0 ] && [[ "$DISTRO_VERSION" == "jammy" ]]; then
+	# systemd-resolved breaks static ip when using ifupdown, disable on jammy jellyfish
+	unlink /etc/resolv.conf
+	rm -f /etc/resolv.conf
+	systemctl disable systemd-resolved
+	echo "nameserver ${NAMESERVER1}" > /etc/resolv.conf
+	echo "nameserver ${NAMESERVER2}" >> /etc/resolv.conf
+fi
+
+# do not accept new config files in an unattended install
+mkdir -p /etc/apt/apt.conf.d
+echo 'Dpkg::Options {"--force-confold";};' > /etc/apt/apt.conf.d/71debconf
+
+# dpkg: error: failed to open package info file '/var/lib/dpkg/available' for reading: No such file or directory
+if [[ "$DISTRO_VERSION" == "focal" ]]; then dpkg --clear-avail; fi
 
 apt-get update
 apt-get install -y apt-utils
@@ -49,29 +55,26 @@ echo -n "${TIMEZONE}" > /etc/timezone
 apt upgrade -y
 apt dist-upgrade -y
 apt autoremove -y
-if [[ "$DISTRO" == "ubuntu" ]]; then
-	if [ -f "$UNMINIMIZE" ]; then echo 'y' | unminimize; fi
-	apt_preferences
-	echo ""
-fi
+if [[ "$DISTRO" =~ ^(kali|ubuntu)$ ]]; then apt_preferences; echo ""; fi
 # network variables
 if [ $NETWORKMANAGER -eq 1 ]; then NETWORKING="network-manager"; else NETWORKING="ifupdown"; fi
-if [[ "$DISTRO" == "debian" || "$DISTRO" == "raspbian" ]]; then
-	apt install -y ${PKGS} ${USER_PKGS} ${SYSMODS} ${FIRMWARE} resolvconf openssh-client openssh-server ${FSPROG} ${NETWORKING}
+if [[ "$DISTRO" =~ ^(debian|raspbian)$ ]]; then
+	apt install -y ${PKGS} ${USER_PKGS} ${SYSMODS} ${FIRMWARE} resolvconf openssh-client openssh-server ${NETWORKING}
 fi
 if [[ "$DISTRO" == "devuan" ]]; then
 	apt install -y openssh-client openssh-server --no-install-recommends
-	apt install -y ${PKGS} ${USER_PKGS} ${SYSMODS} ${FIRMWARE} openresolv ${FSPROG} ${NETWORKING}
+	apt install -y ${PKGS} ${USER_PKGS} ${SYSMODS} ${FIRMWARE} openresolv ${NETWORKING}
+fi
+if [[ "$DISTRO" == "kali" ]]; then
+	apt install -y ${PKGS} ${USER_PKGS} ${SYSMODS} ${FIRMWARE} openssh-client openssh-server dbus-user-session libical3 resolvconf haveged ntpdate ${NETWORKING}
 fi
 if [[ "$DISTRO" == "ubuntu" ]]; then
 	if [[ "$DISTRO_VERSION" =~ ^(kinetic|lunar|mantic|noble)$ ]]; then RESOLVE="systemd-resolved"; else RESOLVE="openresolv"; fi
-	apt install -y ${PKGS} ${USER_PKGS} ${SYSMODS} ${RESOLVE} openssh-client openssh-server ${FSPROG} ${NETWORKING}
-	if [ $NETWORKMANAGER -eq 0 ]; then
-		if [[ "$DISTRO_VERSION" == "jammy" ]]; then
-			# disable systemd-networkd and mask systemd-networkd-wait-online
-			systemctl disable systemd-networkd
-			systemctl mask systemd-networkd-wait-online
-		fi
+	apt install -y ${PKGS} ${USER_PKGS} ${SYSMODS} ${RESOLVE} openssh-client openssh-server ${NETWORKING}
+	if [ $NETWORKMANAGER -eq 0 ] && [[ "$DISTRO_VERSION" == "jammy" ]]; then
+		# disable systemd-networkd and mask systemd-networkd-wait-online
+		systemctl disable systemd-networkd
+		systemctl mask systemd-networkd-wait-online
 	fi
 fi
 # apt clean
@@ -81,6 +84,11 @@ if [[ "$DISTRO" == "ubuntu" ]]; then
 		echo '#!/bin/sh' > /etc/update-motd.d/88-esm-announce
 		chmod +x /etc/update-motd.d/88-esm-announce
 	fi
+	if [[ -f "/etc/update-motd.d/91-contract-ua-esm-status" ]]; then
+		rm -f /etc/update-motd.d/91-contract-ua-esm-status
+		echo '#!/bin/sh' > /etc/update-motd.d/91-contract-ua-esm-status
+		chmod +x /etc/update-motd.d/91-contract-ua-esm-status
+	fi
 	if [[ -f "/etc/apt/apt.conf.d/20apt-esm-hook.conf" ]]; then
 		rm -f /etc/apt/apt.conf.d/20apt-esm-hook.conf
 		touch /etc/apt/apt.conf.d/20apt-esm-hook.conf
@@ -89,10 +97,16 @@ if [[ "$DISTRO" == "ubuntu" ]]; then
 	echo 'DPkg::Post-Invoke {"/usr/local/sbin/remove-ubuntu-advert";};' > /etc/apt/apt.conf.d/80remove-ubuntu-advert
 	cat <<EOF > "/usr/local/sbin/remove-ubuntu-advert"
 #!/bin/bash
+
 if [[ -f "/etc/update-motd.d/88-esm-announce" ]]; then
 	rm -f /etc/update-motd.d/88-esm-announce
 	echo '#!/bin/sh' > /etc/update-motd.d/88-esm-announce
 	chmod +x /etc/update-motd.d/88-esm-announce
+fi
+if [[ -f "/etc/update-motd.d/91-contract-ua-esm-status" ]]; then
+	rm -f /etc/update-motd.d/91-contract-ua-esm-status
+	echo '#!/bin/sh' > /etc/update-motd.d/91-contract-ua-esm-status
+	chmod +x /etc/update-motd.d/91-contract-ua-esm-status
 fi
 if [[ -f "/etc/apt/apt.conf.d/20apt-esm-hook.conf" ]]; then
 	rm -f /etc/apt/apt.conf.d/20apt-esm-hook.conf
@@ -108,8 +122,10 @@ apt -y autoclean
 echo -n "${HOSTNAME}" > /etc/hostname;
 sed -i "1 a 127.0.1.1	${HOSTNAME}" /etc/hosts;
 if [ $USERACCT -eq 0 ]; then
+	# prevent build fail because of white spaces
+	NAME_FIXUP=`echo ${NAME} | sed "s/ //g"`
 	echo "";
-	adduser ${USERNAME} --gecos ${NAME} --disabled-password
+	adduser ${USERNAME} --gecos ${NAME_FIXUP} --disabled-password
 	echo "${USERNAME}:${PASSWORD}" | chpasswd
 	adduser ${USERNAME} sudo
 	adduser ${USERNAME} audio
@@ -185,7 +201,7 @@ echo "Moving scripts ..."
 cd ~
 mkdir -p /usr/local/bin
 mkdir -p /usr/local/sbin
-if [[ "$BOARD_EXT" == "rpi-3" || "$BOARD_EXT" == "rpi-4" || "$BOARD_EXT" == "rpi-5" ]]; then
+if [[ "$BOARD_EXT" =~ ^(rpi-2+3|rpi-3|rpi-4|rpi-5)$ ]]; then
 	wget -cq --show-progress ${URL}deb-eeprom
 	mv -f deb-eeprom /usr/local/bin/
 fi
@@ -197,7 +213,7 @@ fi
 wget -cq --show-progress ${URL}governor
 wget -cq --show-progress https://raw.githubusercontent.com/pyavitz/rpi-img-builder/menuconfig/menu-config
 wget -cq --show-progress https://raw.githubusercontent.com/pyavitz/rpi-img-builder/menuconfig/menu-config-update
-mv -f {governor,setup,sysinfo,smon,menu-config,menu-config-update} /usr/local/bin/
+mv -f {governor,setup,sysinfo,smon,menu-config,menu-config-update,transfer} /usr/local/bin/
 mv -f firstboot.sh /usr/local/sbin/firstboot
 mv -f leds.sh /usr/local/sbin/leds
 if [[ "$DISTRO" == "devuan" ]]; then
@@ -219,14 +235,11 @@ chown -R root:root /usr/local/sbin/
 
 # motd
 mkdir -p /etc/update-motd.d
-if [[ -f "/etc/update-motd.d/10-uname" ]]; then
-	rm -f /etc/update-motd.d/10-uname
-fi
+rm -f /etc/update-motd.d/{10-uname,00-header}
 if [[ -f "/etc/update-motd.d/10-help-text" ]]; then
 	rm -f /etc/update-motd.d/10-help-text
-fi
-if [[ -f "/etc/update-motd.d/00-header" ]]; then
-	rm -f /etc/update-motd.d/00-header
+	echo '#!/bin/sh' > /etc/update-motd.d/10-help-text
+	chmod +x /etc/update-motd.d/10-help-text
 fi
 mv -f {00-header,15-brand,20-sysinfo,90-dynamic-motd} /etc/update-motd.d/
 chmod +x /etc/update-motd.d/*
@@ -242,6 +255,21 @@ chown root:root /etc/update-motd.d/{00-header,15-brand,20-sysinfo,90-dynamic-mot
 rm -f /etc/motd
 echo "" > /etc/motd
 chown root:root /etc/motd
+
+# kali services
+if [[ "$DISTRO" == "kali" ]]; then 
+	if [ $VERBOSE -eq 1 ]; then kali_services; else kali_services > /dev/null 2>&1; fi
+fi
+
+# debian bookworm fixups
+if [[ "$DISTRO_VERSION" == "bookworm" ]]; then
+	apt install -y binfmt-support
+	mv -f /root/systemd-binfmt-fixups /usr/local/sbin/systemd-binfmt-fixups
+	chmod +x /usr/local/sbin/systemd-binfmt-fixups
+	binfmt_fixups_service > /dev/null 2>&1
+else
+	rm -f /root/systemd-binfmt-fixups
+fi
 
 # rpi firmware
 extra_firmware
@@ -313,9 +341,7 @@ rm -fdR pi-bluetooth*
 rpi_userland
 
 # eeprom
-if [[ "$BOARD_EXT" == "rpi-2+3" || "$BOARD_EXT" == "rpi-3" || "$BOARD_EXT" == "rpi-4" || "$BOARD_EXT" == "rpi-5" ]]; then
-	eeprom_support
-fi
+if [[ "$BOARD_EXT" =~ ^(rpi-2+3|rpi-3|rpi-4|rpi-5)$ ]]; then eeprom_support; fi
 
 # remove zstd compression (not supported by older kernels)
 if [[ "$DISTRO" == "ubuntu" ]]; then
@@ -340,6 +366,9 @@ if [[ "$DISTRO" == "ubuntu" ]]; then
 	palette-dark > /dev/null 2>&1
 	ln -sf /etc/newt/palette.dark  /etc/alternatives/newt-palette
 fi
+
+# xorg confs
+if [[ "$BOARD_EXT" =~ ^(rpi-4|rpi-5)$ ]]; then xorg_confs; fi
 
 # hack
 if [[ "$BOARD" == "bcm2708" ]] && [[ -f "/lib/ld-linux.so.3" ]]; then
@@ -371,6 +400,9 @@ else
 fi
 
 # finish
+rm -f /etc/apt/apt.conf.d/71debconf
+rm -fdr /*usr-is-merged*
+if [[ "$DISTRO" == "ubuntu" ]]; then rm -f /etc/resolv.conf; fi
 echo ""
 echo "Finalizing ..."
 echo ""

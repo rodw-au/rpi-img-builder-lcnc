@@ -6,9 +6,10 @@ KERNEL="linux-rpi"
 CKERNEL="linux"
 
 # host machine
-HOST_MACHINE=`cat /etc/os-release | grep -w NAME | sed 's/NAME=//g' | sed 's/"//g' | sed 's/ GNU\/Linux//g'`
-HOST_CODENAME=`cat /etc/os-release | grep -w "VERSION_CODENAME" | sed 's/VERSION_CODENAME=//g'`
 HOST_ARCH=`uname -m`
+HOST_CODENAME=`cat /etc/os-release | grep -w "VERSION_CODENAME" | sed 's/VERSION_CODENAME=//g'`
+HOST_MACHINE=`cat /etc/os-release | grep -w NAME | sed 's/NAME=//g' | sed 's/"//g' | sed 's/ GNU\/Linux//g'`
+HOST_PRETTY=`cat /etc/os-release | grep -w "PRETTY_NAME" | sed 's/PRETTY_NAME=//g' | sed 's/"//g'`
 EXPIRED="The userdata.txt file has expired. Create a new one."
 
 # validate
@@ -27,7 +28,7 @@ else
 		fi
 	done
 fi
-if [[ "$BUILDER" == "6.2" ]]; then :; else echo -e "${EXPIRED}"; exit 0; fi
+if [[ "$BUILDER" == "6.9" ]]; then :; else echo -e "${EXPIRED}"; exit 0; fi
 }
 
 # board dot txt
@@ -42,16 +43,14 @@ exit 0
 # packages
 PKGS="tzdata keyboard-configuration sudo man-db dbus initramfs-tools whiptail \
 	fonty-rg patch curl wget apt-transport-https dirmngr cmake rsync \
-	psmisc parted pv zip unzip aria2 libell0 fdisk i2c-tools cpu hwinfo \
-	haveged git build-essential net-tools ifplugd wireless-regdb ntp mtools \
+	psmisc parted pv zip unzip aria2 libell0 fdisk i2c-tools cpu \
+	haveged git build-essential net-tools wireless-regdb ntp mtools \
 	fuse3 wpasupplicant wireless-tools usbutils alsa-utils gettext iw \
 	bison flex mc nano figlet toilet dialog python3 python3-setuptools \
 	ntfs-3g bc zram-tools libncursesw5-dev libssl-dev autopoint autoconf \
 	automake pkg-config libtool fake-hwclock avahi-utils distro-info-data \
-	lsb-release liblzo2-2 bluetooth bluez bluez-tools gpiod python3-libgpiod"
-
-# filesystems
-FSPROG="e2fsprogs btrfs-progs xfsprogs"
+	lsb-release liblzo2-2 bluetooth bluez bluez-tools gpiod python3-libgpiod \
+	e2fsprogs btrfs-progs f2fs-tools xfsprogs kpartx sg3-utils lsscsi flashrom"
 
 # sys-mods
 SYSMODS="debhelper d-shlibs rfkill dosfstools psmisc"
@@ -59,24 +58,3 @@ SYSMODS="debhelper d-shlibs rfkill dosfstools psmisc"
 # firmware
 FIRMWARE="firmware-linux-nonfree firmware-linux firmware-misc-nonfree \
           firmware-realtek firmware-ralink"
-
-override_board (){
-if [[ -z "$ARCH_EXT" ]]; then
-	:;
-else
-	sed -i 's/^ARCH_EXT=.*/ARCH_EXT="'"${ARCH_EXT}"'"/' board.txt
-	if [[ "$ARCH_EXT" == "armel" ]]; then
-		sed -i 's/^CROSS_COMPILE=.*/CROSS_COMPILE="'"arm-linux-gnueabi-"'"/' board.txt
-		sed -i 's/^STATIC=.*/STATIC="'"qemu-arm-static"'"/' board.txt
-	fi
-	if [[ "$ARCH_EXT" == "armhf" ]]; then
-		sed -i 's/^CROSS_COMPILE=.*/CROSS_COMPILE="'"arm-linux-gnueabihf-"'"/' board.txt
-		sed -i 's/^STATIC=.*/STATIC="'"qemu-arm-static"'"/' board.txt
-	fi
-	if [[ "$ARCH_EXT" == "arm64" ]]; then
-		sed -i 's/^CROSS_COMPILE=.*/CROSS_COMPILE="'"aarch64-linux-gnu-"'"/' board.txt
-		sed -i 's/^STATIC=.*/STATIC="'"qemu-aarch64-static"'"/' board.txt
-	fi
-fi
-rm -f override.txt
-}

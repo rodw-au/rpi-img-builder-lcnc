@@ -1,21 +1,43 @@
 #!/bin/bash
 
 # Systemd services
-led_service (){
-tee /etc/systemd/system/leds.service <<EOF
+binfmt_fixups_service (){
+tee /etc/systemd/system/binfmt-fixups.service <<EOF
 [Unit]
-Description=LEDs
-ConditionPathExists=/usr/local/sbin/leds
+Description=Systemd Binfmt Fixups
+ConditionFileIsExecutable=/usr/local/sbin/systemd-binfmt-fixups
+After=rc-local.service
 
 [Service]
-ExecStart=/usr/local/sbin/leds &>/dev/null
+Type=forking
+ExecStart=/usr/local/sbin/systemd-binfmt-fixups
+TimeoutSec=0
+RemainAfterExit=yes
+StandardOutput=journal+console
+StandardError=journal+console
+
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl enable binfmt-fixups.service
+}
+
+credentials_service (){
+tee /etc/systemd/system/credentials.service <<EOF
+[Unit]
+Description=Credentials
+After=firstboot.service network.target
+Before=rc-local.service
+ConditionPathExists=/usr/local/bin/credentials
+
+[Service]
+ExecStart=/usr/local/bin/credentials > /dev/null 2>&1
 Type=oneshot
 RemainAfterExit=yes
 
 [Install]
 WantedBy=multi-user.target
 EOF
-systemctl enable leds
 }
 
 firstboot_service (){
@@ -38,24 +60,6 @@ WantedBy=multi-user.target
 EOF
 }
 
-credentials_service (){
-tee /etc/systemd/system/credentials.service <<EOF
-[Unit]
-Description=Credentials
-After=firstboot.service network.target
-Before=rc-local.service
-ConditionPathExists=/usr/local/bin/credentials
-
-[Service]
-ExecStart=/usr/local/bin/credentials > /dev/null 2>&1
-Type=oneshot
-RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
-EOF
-}
-
 governor_service (){
 tee /etc/systemd/system/governor.service <<EOF
 [Unit]
@@ -71,6 +75,32 @@ RemainAfterExit=yes
 [Install]
 WantedBy=multi-user.target
 EOF
+}
+
+kali_services (){
+systemctl enable avahi-daemon
+systemctl enable bluetooth
+systemctl enable ntpsec
+systemctl enable ssh
+systemctl disable systemd-networkd
+systemctl mask systemd-networkd-wait-online
+}
+
+led_service (){
+tee /etc/systemd/system/leds.service <<EOF
+[Unit]
+Description=LEDs
+ConditionPathExists=/usr/local/sbin/leds
+
+[Service]
+ExecStart=/usr/local/sbin/leds &>/dev/null
+Type=oneshot
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl enable leds
 }
 
 rc-local_service (){
@@ -111,26 +141,20 @@ chmod +x /etc/rc.local
 
 systemd_services (){
 systemctl enable rc-local
-systemctl enable ifplugd
+#systemctl enable ifplugd
 systemctl enable zramswap
 systemctl enable bluetooth
 systemctl enable firstboot
 systemctl enable credentials
 systemctl enable governor
-if [[ "$DISTRO_VERSION" == "bullseye" ]]; then
-	if [[ "$BOARD" == "bcm2708" ]]; then
-		mkdir -p /etc/systemd/system/haveged.service.d;
-		echo -e '[Service]\nSystemCallFilter=uname' > /etc/systemd/system/haveged.service.d/fix.conf;
-		systemctl daemon-reload;
-		systemctl restart haveged;
-	fi
+if [[ "$DISTRO_VERSION" == "bullseye" ]] && [[ "$BOARD" == "bcm2708" ]]; then
+	mkdir -p /etc/systemd/system/haveged.service.d
+	echo -e '[Service]\nSystemCallFilter=uname' > /etc/systemd/system/haveged.service.d/fix.conf
+	systemctl daemon-reload
+	systemctl restart haveged
 fi
-if [[ -f "/etc/systemd/system/multi-user.target.wants/ondemand.service" ]]; then
-	systemctl disable ondemand;
-fi
-if [[ "$DISTRO" == "debian" ]]; then
-	systemctl enable resolvconf;
-fi
+if [[ -f "/etc/systemd/system/multi-user.target.wants/ondemand.service" ]]; then systemctl disable ondemand; fi
+if [[ "$DISTRO" =~ ^(debian|kali|raspbian)$ ]]; then systemctl enable resolvconf; fi
 #systemctl enable serial-getty@ttyUSB0.service
 }
 
