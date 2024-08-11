@@ -28,15 +28,15 @@ echo 'deleting temp files'
 
 # Install companion repositories. NOTE: QTPYVCP does not support the raspberry pi.
 
-# echo "Install ethercat repository"
-# mkdir -p /usr/local/share/keyrings/
-# wget -O- https://build.opensuse.org/projects/science:EtherLab/signing_keys/download?kind=gpg | gpg --dearmor | dd of=/etc/apt/trusted.gpg.d/science_EtherLab.gpg
-# tee -a /etc/apt/sources.list.d/ighvh.sources > /dev/null <<EOT
-# Types: deb
-# Signed-By: /etc/apt/trusted.gpg.d/science_EtherLab.gpg
-# Suites: ./
-# URIs: http://download.opensuse.org/repositories/science:/EtherLab/Debian_12/
-# EOT
+echo "Install ethercat repository"
+mkdir -p /usr/local/share/keyrings/
+wget -O- https://build.opensuse.org/projects/science:EtherLab/signing_keys/download?kind=gpg | gpg --dearmor | dd of=/etc/apt/trusted.gpg.d/science_EtherLab.gpg
+tee -a /etc/apt/sources.list.d/ighvh.sources > /dev/null <<EOT
+Types: deb
+Signed-By: /etc/apt/trusted.gpg.d/science_EtherLab.gpg
+Suites: ./
+URIs: http://download.opensuse.org/repositories/science:/EtherLab/Debian_12/
+EOT
 
 echo 'Updating apt repository list'
 echo deb [arch=amd64,arm64 signed-by=/usr/share/keyrings/linuxcnc.gpg] https://www.linuxcnc.org/ bookworm base 2.9-uspace | tee /etc/apt/sources.list.d/linuxcnc.list > /dev/null

@@ -1,5 +1,5 @@
 # Image Size: 3584MB 4096MB
-IMGSIZE="122880MB"
+IMGSIZE="12288MB"
 
 # Root Filesystem Types: ext4 btrfs xfs
 FSTYPE="ext4"
