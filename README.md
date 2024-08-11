@@ -2,26 +2,26 @@
 <summary><h3>Boards</h3></summary>
 
 ```py
-Raspberry Pi Zero/W/1		bcm2708 / ARMEL
-Raspberry Pi Zero/W/2/3		bcm2709 / ARMHF
-Raspberry Pi Zero/W/2/3		bcm2710 / ARM64
-Raspberry Pi 4/400		bcm2711 / ARM64
-Raspberry Pi 4/400		bcm2711v7 / ARMHF
-Raspberry Pi 5			bcm2712 / ARM64
+Raspberry Pi Zero/W/1			bcm2708 / ARMEL
+Raspberry Pi ZeroW2/2/3			bcm2709 / ARMHF
+Raspberry Pi ZeroW2/3			bcm2710 / ARM64
+Raspberry Pi ZeroW2/3/4/400/5		bcm2711 / ARM64
+Raspberry Pi 4/400			bcm2711v7 / ARMHF
+Raspberry Pi 5				bcm2712 / ARM64
 ```
 </details>
 
-[Raspberry Pi Hardware](https://www.raspberrypi.org/documentation/hardware/raspberrypi)
+* [Raspberry Pi Hardware](https://www.raspberrypi.org/documentation/hardware/raspberrypi)
+* [The config dot txt](https://www.raspberrypi.com/documentation/computers/config_txt.html#what-is-config-txt)
 
-### Host dependencies for Debian Bullseye / Bookworm and Ubuntu Jammy Jellyfish
-* **Debian Bullseye** (recommended)
+### Host dependencies for Debian Bookworm and Ubuntu Jammy Jellyfish / Noble Numbat
 * **Debian Bookworm** (testing)
 * **Ubuntu Jammy Jellyfish** (recommended)
+* **Ubuntu Noble Numbat** (recommended)
 
 **Install options:**
 * Run the `./install.sh` script ***(recommended)***
 * Run builder [make commands](https://github.com/pyavitz/rpi-img-builder#install-dependencies) (dependency: make)
-* Review [package list](https://raw.githubusercontent.com/pyavitz/rpi-img-builder/master/lib/.package.list) and install manually
 
 ---
 
@@ -29,9 +29,8 @@ Raspberry Pi 5			bcm2712 / ARM64
 #### Install dependencies
 
 ```sh
-make ccompile	# Install x86-64 cross dependencies
-make ccompile64	# Install Arm64 cross dependencies
-make ncompile	# Install native dependencies
+make ccompile	# Install x86-64 dependencies
+make ncompile	# Install Aarch64 dependencies
 ```
 
 #### Menu interface
@@ -48,6 +47,7 @@ make dialogrc   # Set builder theme (optional)
 make list		# List boards
 make all board=xxx	# Kernel > rootfs > image
 make kernel board=xxx	# Builds linux kernel package
+make commit board=xxx	# Builds linux kernel package
 make rootfs board=xxx	# Create rootfs tarball
 make image board=xxx	# Make bootable image
 ```
@@ -55,7 +55,7 @@ make image board=xxx	# Make bootable image
 #### Miscellaneous
 
 ```sh
-make cleanup    # Clean up rootfs and image errors
+make clean      # Clean up rootfs and image errors
 make purge      # Remove source directory
 make purge-all  # Remove source and output directory
 make commands   # List more commands
@@ -81,8 +81,9 @@ Ccache:			# Compiler cache
 Distribution
 Distro:			# Supported: debian, devuan and ubuntu
 Release:		# Debian: bullseye, bookworm, testing, unstable and sid
-			# Devuan: chimaera, daedalus, excalibur, testing, unstable and ceres
-			# Ubuntu: focal, jammy, kinetic and lunar
+			# Devuan: chimaera and daedalus (broken: excalibur, testing, unstable, ceres)
+			# https://www.devuan.org/os/announce/excalibur-usrmerge-announce-2024-02-20.html
+			# Ubuntu: focal, jammy and noble
 NetworkManager		# 1 networkmanager | 0 ifupdown
 
 Customize
@@ -100,11 +101,14 @@ User service:		# Create user during first boot (bypass the user information abov
 #### Customize image
 * custom.txt
 ```sh
-# Default Image Size: 3072MB
-IMGSIZE="3072MB"
+# Image Size
+IMGSIZE="4096MB"
 
 # Root Filesystem Types: ext4 btrfs xfs
 FSTYPE="ext4"
+
+# Shrink Image
+SHRINK="true"
 
 # Hostname
 HOSTNAME="raspberrypi"
@@ -170,13 +174,12 @@ GATEWAY=""			# Your Gateway
 DNS=""				# Your preferred dns
 
 # change hostname
-CHANGE="false"			# Set to true to change hostname
 HOSTNAME="raspberrypi"		# Hostname
 
 For headless use: ssh user@ipaddress
 ```
 #### System Menu: `menu-config`
-<img src="https://i.imgur.com/5zyY8uI.png" alt="Main Menu" />
+<img src="https://i.imgur.com/vwFVBzF.png" alt="Main Menu" />
 
 ---
 

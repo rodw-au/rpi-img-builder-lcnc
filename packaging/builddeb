@@ -36,8 +36,14 @@ create_package() {
 	dpkg-deb -Z$compression --build "$pdir" ..
 }
 
-if [ -f scripts/package/pkgvars ]; then
+if [ -f "scripts/package/pkgvars" ]; then
 	. scripts/package/pkgvars
+	if [ -f "dtclist.txt" ] && [ -f "initrd" ] && [ -f "headers-byteshift.patch" ]; then
+		:;
+	else
+		echo -e "A builddeb dependency file is missing."
+		exit 0
+	fi
 else
 	echo "Missing: pkgvars"
 	exit 0
@@ -50,8 +56,8 @@ libc_headers_dir="$objtree/debian/headertmp"
 dbg_dir="$objtree/debian/dbgtmp"
 libc_headers_packagename=linux-libc-dev
 dbg_packagename=$packagename-dbg
-packagename=$linux_packagename
-kernel_headers_packagename=$headers_packagename
+packagename=$linux_name
+kernel_headers_packagename=$headers_name
 
 if [ "$ARCH" = "um" ] ; then
 	packagename=user-mode-linux-$version
@@ -172,11 +178,14 @@ fi
 
 # Update dtb list
 for dtclist in `cat dtclist.txt`; do ls $tmpdir/$linux_path/$dtclist 2>/dev/null | tee -a dtclist.new > /dev/null 2>&1; done
+grep ".dtb" "dtclist.txt" | echo "  CHKLIST `wc -l`"
 rm -f "dtclist.txt"; mv -f "dtclist.new" "dtclist.txt"
 
 # Installing dtb files
 if [ -d $tmpdir/$linux_path ]; then
 	mkdir -p "$tmpdir/$boot_path"
+	grep ".dtb" "dtclist.txt" | echo "  CHKINST `wc -l`"
+	grep ".dtb" "dtclist.txt" | sed 's/^/  DTBINST /' | sed "s/.\/debian\/tmp\/usr\/lib\/$linux_name/boot/g"
 	for dtclist in `cat dtclist.txt`; do cp -r "$dtclist" 2>/dev/null "$tmpdir/$boot_path"; done
 	rm -f dtclist.txt
 	# install overlays
@@ -194,6 +203,13 @@ if [ -d $tmpdir/$linux_path ]; then
 			cp -r "$tmpdir/$linux_path/overlays" "$tmpdir/$boot_path"
 		fi
 	fi
+fi
+
+# Install initramfs post-update script
+if [ -f "initrd" ]; then
+	mkdir -p "$tmpdir/etc/initramfs/post-update.d"
+	mv -f "initrd" "$tmpdir/etc/initramfs/post-update.d/99-initrd"
+	chmod 755 "$tmpdir/etc/initramfs/post-update.d/99-initrd"
 fi
 
 # Install the maintainer scripts
@@ -230,6 +246,9 @@ if [ -d /$boot_path ]; then
 fi
 if [ -d /$boot_path/overlays ]; then
 	rm -fdr /$boot_path/overlays;
+fi
+if [ -f /etc/initramfs/post-update.d/99-initrd ]; then
+	rm -f /etc/initramfs/post-update.d/99-initrd
 fi
 
 sync

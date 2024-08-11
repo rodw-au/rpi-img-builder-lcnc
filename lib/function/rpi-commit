@@ -13,7 +13,7 @@ echo ""
 if [[ -f "${CKERNEL}-${COMMIT}.tar.gz" ]]; then
 	:;
 else
-	echo_kernel
+	echo -e "${WHT}Downloading ${CKERNEL}-${COMMIT}${FIN} ..."
 	${DOWNLOAD} ${RPIURL}${COMMIT}.tar.gz
 	echo -e " ${PNK}[${FIN}${GRN}done${FIN}${PNK}]${FIN}"
 fi
@@ -114,7 +114,7 @@ done
 }
 
 builddeb (){
-if [ $CROSSCOMPILE -eq 1 ]; then echo -e "${GRN}  CC${FIN}"; else echo -e "${GRN}  NC${FIN}"; fi
+if [ $CROSSCOMPILE -eq 1 ]; then echo -e "${GRN}  CC${FIN}      ${CROSS_COMPILE}${COMPILER}"; else echo -e "${GRN}  NC${FIN}      ${COMPILER}"; fi
 echo ${BUILD_VERSION} > .version
-echo 'y' | kbuild "KBUILD_BUILD_USER=${KBUSER} KBUILD_BUILD_HOST=${KBHOST} bindeb-pkg"
+echo 'y' | kbuild "LOCALVERSION= KBUILD_BUILD_USER=${KBUSER} KBUILD_BUILD_HOST=${KBHOST} bindeb-pkg"
 }

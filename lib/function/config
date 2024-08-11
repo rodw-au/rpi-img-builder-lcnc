@@ -1,0 +1,80 @@
+#!/bin/bash
+
+custom_txt (){
+cat <<EOF > "custom.txt"
+# Bootstrap: if false use debootstrap
+MMDEBSTRAP="true"
+
+# Image Size: 3584MB 4096MB
+IMGSIZE="4096MB"
+
+# Root Filesystem Types: ext4 btrfs xfs
+FSTYPE="ext4"
+
+# Shrink Image
+SHRINK="true"
+
+# Hostname
+HOSTNAME="raspberrypi"
+
+# Branding: true false
+BRANDING="false"
+MOTD="Raspberry Pi"
+
+### DO NOT EDIT BELOW THIS LINE
+CUSTOM="${BUILDER}"
+EOF
+}
+
+kernel_txt (){
+cat <<EOF > "kernel.txt"
+### ADVANCED KERNEL PREFERENCES
+
+# Custom linux logo
+LINUX_LOGO="linux_clut224.ppm"
+
+# Enable additional modules
+MODULES="CONFIG_MODULE_SIG=y CONFIG_CIFS_POSIX=y CONFIG_EFI=y CONFIG_DMI=y CONFIG_SYSFB_SIMPLEFB=y \n
+	CONFIG_EFI_ARMSTUB_DTB_LOADER=y CONFIG_EFI_BOOTLOADER_CONTROL=y CONFIG_RESET_ATTACK_MITIGATION=y \n
+	CONFIG_NVME_HWMON=y"
+
+### DO NOT EDIT BELOW THIS LINE
+KERNEL_PREFERENCES="$BUILDER"
+EOF
+sed -i 's/[\][n]/\\/g' kernel.txt
+}
+
+mirror_txt (){
+cat <<EOF > "mirror.txt"
+DEBIAN_MIRROR="http://deb.debian.org/debian"
+DEVUAN_MIRROR="http://deb.devuan.org/merged"
+KALI_MIRROR="http://http.kali.org/kali"
+UBUNTU_MIRROR="http://ports.ubuntu.com/ubuntu-ports/"
+
+### DO NOT EDIT BELOW THIS LINE
+MIRROR_LIST="$BUILDER"
+EOF
+}
+
+profile_txt (){
+cat <<EOF > "profile.txt"
+# User data defaults
+#NAME="$MYNAME"
+#USERNAME="$USER"
+#PASSWORD="board"
+#COMPILER="gcc"
+#CCACHE="$CCACHE"
+#NETWORKMANAGER="$NETWORKMANAGER"
+#RTW88="$RTW88"
+#USERACCT="$USERACCT"
+#USER_PKGS="$USER_PKGS"
+#LOCALE="$LOCALE"
+#LOCALE_LC_ALL="$LOCALE_LC_ALL"
+#TIMEZONE="$TIMEZONE" 
+#NAMESERVER1="$NAMESERVER1"
+#NAMESERVER2="$NAMESERVER2"
+
+### DO NOT EDIT BELOW THIS LINE
+USER_PROFILE="$PROFILE"
+EOF
+}

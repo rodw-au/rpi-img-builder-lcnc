@@ -67,22 +67,7 @@ EOF
 
 ifupdown-setup(){
 rm -f /etc/network/interfaces
-if [[ "$DISTRO" == "devuan" ]]; then
-	ln -sr /etc/network/if-up.d/00check-network-cable /etc/network/if-pre-up.d/00check-network-cable
-	sed -i 's/#CONFIGURE_INTERFACES=yes/CONFIGURE_INTERFACES=yes/g' /etc/default/networking
-	sed -i 's/#WAIT_ONLINE_METHOD=ifup/WAIT_ONLINE_METHOD=ifup/g' /etc/default/networking
-	sed -i 's/#WAIT_ONLINE_TIMEOUT=300/WAIT_ONLINE_TIMEOUT=10/g' /etc/default/networking
-	if [ -f /etc/default/network-test ]; then
-		sed -i 's/DO_ARPING=${DO_ARPING:-yes}/DO_ARPING=${DO_ARPING:-no}/g' /etc/default/network-test
-		sed -i 's/DO_SYSLOG=${DO_SYSLOG:-yes}/DO_SYSLOG=${DO_SYSLOG:-no}/g' /etc/default/network-test
-	fi
-	if [[ "$BOARD" == "bcm2710" ]]; then
-		eth_udev-rule
-	fi
-	if [[ "$BOARD" == "bcm2709" ]]; then
-		eth_udev-rule
-	fi
-fi
+if [[ "$DISTRO" == "devuan" ]]; then if [[ "$BOARD" =~ ^(bcm2709|bcm2710)$ ]]; then eth_udev-rule; fi; fi
 if [[ "$DISTRO" == "ubuntu" ]]; then
 	if [[ "$DISTRO_VERSION" == "jammy" ]]; then
 		# /etc/network/if-down.d/resolved: 12: mystatedir: not found
@@ -145,9 +130,7 @@ EOF
 }
 
 networkmanager-setup(){
-if [ -f /etc/network/interfaces ]; then
-	rm -f /etc/network/interfaces
-fi
+rm -f /etc/network/interfaces
 tee /etc/network/interfaces <<EOF
 source /etc/network/interfaces.d/*
 
@@ -166,14 +149,7 @@ else
 	echo "[connection]" > /etc/NetworkManager/conf.d/default-wifi-powersave-on.conf
 	echo "wifi.powersave = 2" >> /etc/NetworkManager/conf.d/default-wifi-powersave-on.conf
 fi
-if [[ "$DISTRO" == "devuan" ]]; then
-	if [[ "$BOARD" == "bcm2710" ]]; then
-		eth_udev-rule
-	fi
-	if [[ "$BOARD" == "bcm2709" ]]; then
-		eth_udev-rule
-	fi
-fi
+if [[ "$DISTRO" == "devuan" ]]; then if [[ "$BOARD" =~ ^(bcm2709|bcm2710)$ ]]; then eth_udev-rule; fi; fi
 }
 
 ifupdown-credentials(){
@@ -198,7 +174,6 @@ if [[ -f "/root/ifupdown.credentials" ]]; then
 	echo 'NAMESERVERS=""' >> /boot/broadcom/credentials.txt
 	echo "" >> /boot/broadcom/credentials.txt
 	echo "# change hostname" >> /boot/broadcom/credentials.txt
-	echo 'CHANGE="false"' >> /boot/broadcom/credentials.txt
 	echo HOSTNAME='"'$CURRENT_HOSTNAME'"' >> /boot/broadcom/credentials.txt
 fi
 }
@@ -224,7 +199,6 @@ if [[ -f "/root/networkmanager.credentials" ]]; then
 	echo 'DNS=""' >> /boot/broadcom/credentials.txt
 	echo "" >> /boot/broadcom/credentials.txt
 	echo "# change hostname" >> /boot/broadcom/credentials.txt
-	echo 'CHANGE="false"' >> /boot/broadcom/credentials.txt
 	echo HOSTNAME='"'$CURRENT_HOSTNAME'"' >> /boot/broadcom/credentials.txt
 fi
 }

@@ -18,7 +18,12 @@ while getopts "rh" OPTION; do
 			echo ""
 			echo -e "Running System Setup ..."
 			sleep .75
-			sudo dpkg-reconfigure locales tzdata keyboard-configuration
+			sudo dpkg-reconfigure locales tzdata keyboard-configuration console-setup
+			if [[ "$DISTRO" == "Devuan" ]]; then
+				sudo service console-setup.sh restart
+			else
+				sudo service console-setup restart
+			fi
 			sleep .50
 			if [[ `curl -I https://github.com 2>&1 | grep 'HTTP/2 200'` ]]; then
 				if [[ "$DISTRO" == "Ubuntu" ]]; then echo ""; fi

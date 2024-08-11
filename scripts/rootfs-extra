@@ -11,44 +11,54 @@ CAP_RELEASE=`echo "$DISTRO_VERSION" | sed -e "s/\b\(.\)/\u\1/g"`
 echo ""
 echo -e "\e[1;37mAdding additional packages to $CAP_DISTRO $CAP_RELEASE\e[0m ..."
 
-echo "nameserver ${NAMESERVER1}" > /etc/resolv.conf
-echo "nameserver ${NAMESERVER2}" >> /etc/resolv.conf
-
 mount -t proc proc proc/
 mount -t sysfs sys sys/
+
+if [[ "$DISTRO" == "ubuntu" ]]; then rm -f /etc/resolv.conf; fi
+echo "nameserver ${NAMESERVER1}" > /etc/resolv.conf
+echo "nameserver ${NAMESERVER2}" >> /etc/resolv.conf
 
 if [[ -f "/etc/apt/trusted.gpg" ]] && [[ "$DISTRO" == "raspbian" ]]; then
 	mkdir -p /etc/apt/trusted.gpg.d
 	mv -f /etc/apt/trusted.gpg /etc/apt/trusted.gpg.d/raspbian-archive-keyring.gpg
 fi
 
+# dpkg: error: failed to open package info file '/var/lib/dpkg/available' for reading: No such file or directory
+if [[ "$DISTRO_VERSION" == "focal" ]]; then dpkg --clear-avail; fi
+
 apt-get update
 apt-get install -y apt-utils
 
-# Locales
-set_locales
+# locales
+apt install -y locales
+export LANGUAGE=${LOCALE}
+export LANG=${LOCALE}
+export LC_ALL=${LOCALE_LC_ALL}
+locale-gen ${LOCALE}
 
-# Timezone
-set_timezone
+# timezone
+ln -snf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime
+echo -n "${TIMEZONE}" > /etc/timezone
 
 apt upgrade -y
 apt dist-upgrade -y
-if [[ "$DISTRO" == "debian" || "$DISTRO" == "raspbian" ]]; then
+if [[ "$DISTRO" =~ ^(debian|raspbian)$ ]]; then
 	apt install -y ${PKGS} ${USER_PKGS} ${SYSMODS} resolvconf openssh-client openssh-server
 fi
 if [[ "$DISTRO" == "devuan" ]]; then
 	apt install -y openssh-client openssh-server --no-install-recommends
 	apt install -y ${PKGS} ${USER_PKGS} ${SYSMODS} openresolv
 fi
+if [[ "$DISTRO" == "kali" ]]; then
+	apt install -y ${PKGS} ${USER_PKGS} dbus-user-session libical3 resolvconf haveged
+fi
 if [[ "$DISTRO" == "ubuntu" ]]; then
-	if [[ "$DISTRO_VERSION" == "kinetic" || "$DISTRO_VERSION" == "lunar" || "$DISTRO_VERSION" == "mantic" ]]; then
-		apt install -y ${PKGS} ${USER_PKGS} ${SYSMODS} systemd-resolved openssh-client openssh-server
-	else
-		apt install -y ${PKGS} ${USER_PKGS} ${SYSMODS} openresolv openssh-client openssh-server
-	fi
+	if [[ "$DISTRO_VERSION" =~ ^(kinetic|lunar|mantic|noble)$ ]]; then RESOLVE="systemd-resolved"; else RESOLVE="openresolv"; fi
+	apt install -y ${PKGS} ${USER_PKGS} ${SYSMODS} ${RESOLVE} openssh-client openssh-server
 fi
 apt -y clean
 apt -y autoclean
 
+if [[ "$DISTRO" == "ubuntu" ]]; then rm -f /etc/resolv.conf; fi
 umount /proc
 umount /sys

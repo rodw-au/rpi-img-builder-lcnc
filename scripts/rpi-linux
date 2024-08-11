@@ -2,19 +2,16 @@
 source lib/function/echoes
 source lib/source
 validation
-# override the board file
-if [[ -f "override.txt" ]]; then
-	. override.txt
-	override_board
-fi
-source board.txt
+if [[ -f "board.txt" ]]; then . board.txt; else noboard; fi
+source kernel.txt
 source userdata.txt
 if [ $VERBOSE -eq 1 ]; then set -x; fi
 source packaging/pkgvars
 source lib/function/rpi-linux
 source lib/function/patching
-source lib/function/modconfig
+source lib/function/defconfig
 source lib/function/compilers
+source lib/function/wireless
 
 # prep
 validation
@@ -25,24 +22,9 @@ if [[ "$HOST_ARCH" == "x86_64"  ]] && [[ "$ARCH" == "arm" || "$ARCH" == "arm64" 
 linux_compilers
 # source directory
 source_dir
-# rpi-linux
-if [[ -e "${KERNEL}-${VERSION}" ]]; then
-	echo ""
-	echo -en "${WHT}${KERNEL}-${VERSION}${FIN}"
-	echo -en " ${PNK}[${FIN}${YLW}removing${FIN}${PNK}]${FIN}"
-	rm -fdr ${KERNEL}-${VERSION}
-	echo -en " ${PNK}[${FIN}${GRN}done${FIN}${PNK}]${FIN}"
-fi
 # download
-if [[ `wget -S --spider https://raw.githubusercontent.com/raspberrypi/linux/rpi-${VERSION}/Makefile 2>&1 | grep 'HTTP/1.1 200 OK'` ]]; then
-	download
-else
-	echo ""
-	echo -e "${WHT}It appears the branch you selected is not available${FIN}?"
-	exit 0
-fi
-# extract
-extract
+download
+extra_wireless
 # setup and firmware
 setup
 firmware
