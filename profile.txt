@@ -2,10 +2,10 @@
 #NAME="Rod"
 #USERNAME="rod"
 #PASSWORD="board"
-#CCACHE="0"
+#COMPILER="gcc"
+#CCACHE="1"
 #NETWORKMANAGER="1"
 #RTW88="0"
-#RTL88XXAU="0"
 #USERACCT="0"
 #USER_PKGS="htop libsensors-dev rsyslog"
 #LOCALE="en_US.UTF-8"
@@ -15,4 +15,4 @@
 #NAMESERVER2="8.8.4.4"
 
 ### DO NOT EDIT BELOW THIS LINE
-USER_PROFILE="1.0"
+USER_PROFILE="1.2"

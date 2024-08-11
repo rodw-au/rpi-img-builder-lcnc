@@ -1,3 +1,6 @@
+# Bootstrap: if false use debootstrap
+MMDEBSTRAP="true"
+
 # Image Size: 3584MB 4096MB
 IMGSIZE="12288MB"
 
@@ -15,4 +18,4 @@ BRANDING="false"
 MOTD="Raspberry Pi"
 
 ### DO NOT EDIT BELOW THIS LINE
-CUSTOM="6.2"
+CUSTOM="6.9"

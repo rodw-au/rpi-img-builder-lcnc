@@ -2,6 +2,7 @@ NAME="cnc"
 USERNAME="cnc"
 PASSWORD="cnc"
 ROOTPASSWD="0"
+
 ### LINUX KERNEL
 VERSION="6.1.y"
 BUILD_VERSION="1"
@@ -21,13 +22,16 @@ DEVROOTFS="1"
 COMPRESS_IMG="1"
 USCRIPTS="1"
 USERACCT="0"
-USER_PKGS="htop libsensors-dev xfce4 xfce4-terminal xfce4-power-manager geany firefox-esr konsole curl" 
-### CUSTOM LINUX KERNEL - Comment out commits
+USER_PKGS="htop libsensors-dev xfce4 xfce4-terminal xfce4-power-manager geany firefox-esr konsole curl"
+
+### CUSTOM LINUX KERNEL
 ENABLE_COMMIT="1"
 COMMIT="342c7ee49e862edc30c893f141f55b9211b7a43b"
+
 ### COMPILER TUNING
 CORES=`nproc`
 CFLAGS=""
+
 ### WHOAMI AND HOST
 KBUSER="linuxcnc"
 KBHOST="raspberrypi"
@@ -41,6 +45,6 @@ NAMESERVER2="8.8.4.4"
 
 ### EXTRA WIRELESS
 RTW88="0"
-RTL88XXAU="0"
+
 ### DO NOT EDIT BELOW THIS LINE
-BUILDER=6.2
+BUILDER=6.9
