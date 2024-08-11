@@ -2,19 +2,23 @@
 source lib/function/echoes
 source lib/source
 validation
-if [[ -f "custom.txt" ]]; then
-	. custom.txt
-else
-	echo -e ""
-	echo -e "The custom.txt file is missing? You need to run: make config"
+source lib/function/release
+source custom.txt
+source lib/function/staging
+source lib/function/shrink
+sleep 1
+source userdata.txt
+if [[ "$USERNAME" == "root" ]]; then
+	echo -e "The username $USERNAME is not viable, choose another."
 	echo -e ""
 	read -p "Press enter to continue."
 	exit 0
 fi
-source userdata.txt
 # check user data file
 if [ $USERACCT -eq 0 ]; then
-	if [ -z $NAME ] && [ -z $USERNAME ] && [ -z $PASSWORD ]; then
+	# prevent build fail because of white spaces
+	NAME_FIXUP=`echo ${NAME} | sed "s/ //g"`
+	if [ -z $NAME_FIXUP ] && [ -z $USERNAME ] && [ -z $PASSWORD ]; then
 		echo -e ""
 		echo -e "Name, Username and Password fields are empty?"
 		echo -e "Enable the user account service or input your"
@@ -27,12 +31,12 @@ fi
 source lib/function/miscellaneous
 # start uscripts
 if [ $USCRIPTS -eq 1 ]; then uscripts_pre-stage1; fi
-if [[ -f "board.txt" ]] && [[ -f "override.txt" ]]; then . override.txt; override_board; fi
 if [[ -f "board.txt" ]]; then . board.txt; else noboard; fi
-source lib/function/staging
-source lib/function/release
 # clean
-if [[ -d "sysroot" ]] || [[ -d "p1" ]] || [[ -d "BOOT" ]]; then make cleanup; clear -x; fi
+if [[ -d "sysroot" ]] || [[ -d "p1" ]] || [[ -d "BOOT" ]] || [[ -f "shrink.img" ]]; then make clean; clear -x; fi
+# verbosity
+if [ $VERBOSE -eq 1 ]; then set -eux -o pipefail; else set -eu -o pipefail; fi
+mirrors
 # check output
 if [[ -d "output/${BOARD}" ]] && [[ `ls output/${BOARD}/linux-*.deb` ]]; then
 	:;
@@ -40,8 +44,14 @@ else
 	echo -e "Missing linux deb packages"
 	exit 0
 fi
-# verbose
-if [ $VERBOSE -eq 1 ]; then set -eux -o pipefail; else set -eu -o pipefail; fi
+# check for qemu
+if [[ `command -v ${STATIC}` ]]; then
+	:;
+else
+	echo -e "Missing depends: ${STATIC}"
+	echo -e "Run ./install.sh"
+	exit 1
+fi
 
 CAP_DISTRO=`echo "${DISTRO}" | sed -e "s/\b\(.\)/\u\1/g"`
 CAP_RELEASE=`echo "${DISTRO_VERSION}" | sed -e "s/\b\(.\)/\u\1/g"`

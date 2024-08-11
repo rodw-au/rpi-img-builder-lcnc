@@ -18,14 +18,9 @@ mount -o defaults,noatime "${IMAGE_LOOP_DEV_ROOTFS}" ${ROOT}
 }
 
 sysroot_setup (){
-SOURCES_LIST="${ROOT}/etc/apt/sources.list"
 mkdir -p ${ROOT}/etc/apt/apt.conf.d ${ROOT}/etc/dpkg/dpkg.cfg.d
 echo "force-unsafe-io" > "${ROOT}/etc/dpkg/dpkg.cfg.d/dpkg-unsafe-io"
-if [ $VERBOSE -eq 1 ]; then
-	choose_release
-else
-	choose_release > /dev/null 2>&1
-fi
+if [ $VERBOSE -eq 1 ]; then choose_release; else choose_release > /dev/null 2>&1; fi
 }
 
 devuan_keyring (){
@@ -43,6 +38,21 @@ else
 fi
 }
 
+kali_keyring (){
+URL="http://http.kali.org/pool/main/k/kali-archive-keyring/"
+FILE="kali-archive-keyring_2024.1_all.deb"
+if [[ `dpkg -l | grep "kali-archive-keyring"` ]]; then
+	if [[ `dpkg -l | grep "kali-archive-keyring" | tr -d -c 0-9` == "20241" ]]; then
+		:;
+	else
+		apt purge -y kali-archive-keyring
+		wget -cq --show-progress ${URL}${FILE}; dpkg -i ${FILE}; rm -f ${FILE}
+	fi
+else
+	wget -cq --show-progress ${URL}${FILE}; dpkg -i ${FILE}; rm -f ${FILE}
+fi
+}
+
 raspbian_keyring (){
 if [[ -f "/usr/share/keyrings/raspbian-archive-keyring.gpg" ]]; then
 	:;
@@ -51,78 +61,47 @@ else
 fi
 }
 
-ubuntu_setup (){
-if [[ "$HOST_ARCH" == "x86_64" ]]; then
-	MACHINE="amd64"
-fi
-if [[ "$HOST_ARCH" == "aarch64" ]]; then
-	MACHINE="arm64"
-fi
+ubuntu_keyring (){
 URL="https://github.com/pyavitz/debian-image-builder/releases/download/dpkg/"
-FILE1="dpkg_1.21.2_$MACHINE.deb"
-FILE2="debootstrap_1.0.126+nmu1_all.deb"
-FILE3="ubuntu-keyring_2020.06.17.1-1_all.deb"
-FILE4="ubuntu-archive-keyring_2020.06.17.1-1_all.deb"
-FILE5="ubuntu-cloud-keyring_2020.06.17.1-1_all.deb"
-FILE6="ubuntu-dbgsym-keyring_2020.06.17.1-1_all.deb"
-if [[ `grep -w "Ubuntu" "/etc/os-release"` ]] && [[ `grep -w "VERSION_CODENAME=jammy" "/etc/os-release"` ]]; then
-	:;
-else
-	if [[ `apt show dpkg | grep "Version: 1.21"` ]] > /dev/null 2>&1; then
+FILE1="ubuntu-keyring_2023.11.28.1-0.2_all.deb"
+FILE2="ubuntu-archive-keyring_2023.11.28.1-0.2_all.deb"
+if [[ `dpkg -l | grep "ubuntu-keyring"` ]]; then
+	if [[ `dpkg -l | grep "ubuntu-keyring" | tr -d -c 0-9` == "20231128102" ]]; then
 		:;
 	else
-		wget -cq $URL$FILE1
-		wget -cq $URL$FILE2
-		dpkg -i *.deb
-		rm -f *.deb
+		apt purge -y ubuntu-keyring 
+		if [[ `dpkg -l | grep "ubuntu-archive-keyring"` ]]; then apt purge -y ubuntu-archive-keyring; fi
+		if [[ `dpkg -l | grep "ubuntu-dbgsym-keyring"` ]]; then apt purge -y ubuntu-dbgsym-keyring; fi
+		if [[ `dpkg -l | grep "ubuntu-cloud-keyring"` ]]; then apt purge -y ubuntu-cloud-keyring; fi
+		wget -cq --show-progress ${URL}${FILE1}; wget -cq --show-progress ${URL}${FILE2}
+		dpkg -i *.deb; rm -f *.deb
 	fi
-fi
-if [ -e /usr/share/keyrings/ubuntu-archive-keyring.gpg ]; then
-	:;
 else
-	wget -cq --show-progress $URL$FILE3
-	wget -cq --show-progress $URL$FILE4
-	wget -cq --show-progress $URL$FILE5
-	wget -cq --show-progress $URL$FILE6
-	dpkg -i *.deb
-	rm -f *.deb
+	wget -cq --show-progress ${URL}${FILE1}; wget -cq --show-progress ${URL}${FILE2}
+	dpkg -i *.deb; rm -f *.deb
 fi
 }
 
 debootstrap_script (){
-if [[ -f "/usr/share/debootstrap/scripts/${DISTRO_VERSION}" ]]; then
+DEBOOTSTRAP_DIR="/usr/share/debootstrap/scripts"
+if [[ -f "${DEBOOTSTRAP_DIR}/${DISTRO_VERSION}" ]]; then
 	:;
 else
-	ln -sr /usr/share/debootstrap/scripts/${DEBOOTSTRAP_SCRIPT} /usr/share/debootstrap/scripts/${DISTRO_VERSION}
+	ln -sr ${DEBOOTSTRAP_DIR}/${DEBOOTSTRAP_SCRIPT} ${DEBOOTSTRAP_DIR}/${DISTRO_VERSION}
 	sleep .50
 fi
 }
 
-# debootstrap
 run_debootstrap (){
-if [[ "$DISTRO" == "devuan" ]]; then
-	DEBOOTSTRAP_SCRIPT="sid"
-	debootstrap_script
-fi
-if [[ "$DISTRO" == "ubuntu" ]]; then
-	DEBOOTSTRAP_SCRIPT="gutsy"
-	debootstrap_script
-fi
-KEY_DIR="/usr/share/keyrings"
-if [[ "$DISTRO" == "debian" || "$DISTRO" == "kali" || "$DISTRO" == "ubuntu" ]]; then
-	debootstrap --arch ${ARCH_EXT} --foreign ${DISTRO_VERSION} ${ROOT}
-	chroot ${ROOT} /debootstrap/debootstrap --second-stage
-fi
-if [[ "$DISTRO" == "devuan" ]]; then
-	KEY="${KEY_DIR}/devuan-archive-keyring.gpg"
-	SOURCE="http://deb.devuan.org/merged"
-	debootstrap --arch ${ARCH_EXT} --foreign --force-check-gpg --keyring=$KEY ${DISTRO_VERSION} ${ROOT} ${SOURCE}
-	chroot ${ROOT} /debootstrap/debootstrap --second-stage
-fi
-if [[ "$DISTRO" == "raspbian" ]]; then
-	KEY="${KEY_DIR}/raspbian-archive-keyring.gpg"
-	SOURCE="http://raspbian.raspberrypi.org/raspbian"
-	debootstrap --arch ${ARCH_EXT} --foreign --force-check-gpg --keyring=$KEY ${DISTRO_VERSION} ${ROOT} ${SOURCE}
+KEY="/usr/share/keyrings/${DISTRO}-archive-keyring.gpg"
+if [[ "$DISTRO" =~ ^(debian|devuan)$ ]]; then DEBOOTSTRAP_SCRIPT="sid"; debootstrap_script; fi
+if [[ "$DISTRO" == "ubuntu" ]]; then DEBOOTSTRAP_SCRIPT="gutsy"; debootstrap_script; fi
+if [[ "$MMDEBSTRAP" == "true" ]]; then
+	mkdir -p ${ROOT}/etc/apt
+	if [ $VERBOSE -eq 1 ]; then choose_release; else choose_release > /dev/null 2>&1; fi
+	mmdebstrap --skip=check/empty --arch=${ARCH_EXT} --keyring=${KEY} ${DISTRO_VERSION} ${ROOT}
+else
+	debootstrap --arch ${ARCH_EXT} --foreign --force-check-gpg --keyring=${KEY} ${DISTRO_VERSION} ${ROOT} ${MIRROR}
 	chroot ${ROOT} /debootstrap/debootstrap --second-stage
 fi
 }

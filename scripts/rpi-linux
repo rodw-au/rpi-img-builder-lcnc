@@ -2,8 +2,8 @@
 source lib/function/echoes
 source lib/source
 validation
-if [[ -f "board.txt" ]] && [[ -f "override.txt" ]]; then . override.txt; override_board; fi
 if [[ -f "board.txt" ]]; then . board.txt; else noboard; fi
+source kernel.txt
 source userdata.txt
 if [ $VERBOSE -eq 1 ]; then set -x; fi
 source packaging/pkgvars
@@ -11,6 +11,7 @@ source lib/function/rpi-linux
 source lib/function/patching
 source lib/function/defconfig
 source lib/function/compilers
+source lib/function/wireless
 
 # prep
 validation
@@ -23,6 +24,7 @@ linux_compilers
 source_dir
 # download
 download
+extra_wireless
 # setup and firmware
 setup
 firmware

@@ -2,9 +2,35 @@
 
 source lib/source
 
-jammy-ccompile(){
+bullseye-ccompile (){
 sudo debconf-apt-progress -- apt install -y \
-	build-essential bison bc git dialog patch fdisk distro-info-data \
+	build-essential bison bc git dialog patch kpartx zstd aria2 pv jq mmdebstrap \
+	dosfstools zip unzip qemu debootstrap qemu-user-static rsync make figlet \
+	kmod cpio flex libssl-dev libncurses5-dev parted fakeroot swig libelf-dev \
+	crossbuild-essential-arm64 crossbuild-essential-armel crossbuild-essential-armhf \
+	distro-info-data lsb-release xz-utils curl e2fsprogs btrfs-progs xfsprogs \
+	fdisk gcc-9 gcc-10 gcc-9-arm-linux-gnueabihf gcc-10-arm-linux-gnueabihf \
+	gcc-9-arm-linux-gnueabi gcc-10-arm-linux-gnueabi gcc-9-aarch64-linux-gnu \
+	gcc-10-aarch64-linux-gnu mtools gcc-9-plugin-dev gcc-10-plugin-dev ccache
+}
+
+bookworm-ccompile (){
+sudo debconf-apt-progress -- apt install -y \
+	build-essential bison bc git dialog patch dosfstools zip unzip parted mmdebstrap \
+	debootstrap qemu-user-static rsync kmod cpio flex libssl-dev libncurses5-dev \
+	device-tree-compiler libfdt-dev python3-distutils python3-dev swig fakeroot figlet \
+	lzop lz4 aria2 pv crossbuild-essential-arm64 crossbuild-essential-armhf u-boot-tools \
+	distro-info-data lsb-release libelf-dev fdisk kpartx ccache xz-utils gcc-11 gcc-12 \
+	python-is-python3 python-dev-is-python3 zstd gcc-arm-none-eabi gcc-11-arm-linux-gnueabihf \
+	gcc-11-aarch64-linux-gnu gcc-12-aarch64-linux-gnu gcc-12-arm-linux-gnueabihf \
+	colorized-logs gdisk jq wget btrfs-progs xfsprogs gcc-11-arm-linux-gnueabi \
+	gcc-12-arm-linux-gnueabi crossbuild-essential-armel python3-setuptools \
+	python3-pyelftools curl mtools gcc-11-plugin-dev gcc-12-plugin-dev ccache
+}
+
+jammy-ccompile (){
+sudo debconf-apt-progress -- apt install -y \
+	build-essential bison bc git dialog patch fdisk distro-info-data mmdebstrap \
 	dosfstools zip unzip qemu debootstrap qemu-user-static rsync xfsprogs \
 	kmod cpio flex libssl-dev libncurses5-dev parted fakeroot swig kpartx \
 	aria2 pv lsb-release xz-utils curl e2fsprogs btrfs-progs jq mtools figlet \
@@ -14,49 +40,41 @@ sudo debconf-apt-progress -- apt install -y \
 	gcc-9-aarch64-linux-gnu gcc-10-aarch64-linux-gnu gcc-11-aarch64-linux-gnu \
 	gcc-9 gcc-10 gcc-11 gcc-12 debian-archive-keyring debian-keyring make libelf-dev \
 	gcc-12-arm-linux-gnueabi gcc-12-arm-linux-gnueabihf gcc-12-aarch64-linux-gnu \
-	gcc-9-plugin-dev gcc-10-plugin-dev gcc-11-plugin-dev gcc-12-plugin-dev
+	gcc-9-plugin-dev gcc-10-plugin-dev gcc-11-plugin-dev gcc-12-plugin-dev ccache
 }
 
-bullseye-ccompile(){
+noble-ccompile (){
 sudo debconf-apt-progress -- apt install -y \
-	build-essential bison bc git dialog patch kpartx zstd aria2 pv jq \
-	dosfstools zip unzip qemu debootstrap qemu-user-static rsync make figlet \
-	kmod cpio flex libssl-dev libncurses5-dev parted fakeroot swig libelf-dev \
-	crossbuild-essential-arm64 crossbuild-essential-armel crossbuild-essential-armhf \
-	distro-info-data lsb-release xz-utils curl e2fsprogs btrfs-progs xfsprogs \
-	fdisk gcc-9 gcc-10 gcc-9-arm-linux-gnueabihf gcc-10-arm-linux-gnueabihf \
-	gcc-9-arm-linux-gnueabi gcc-10-arm-linux-gnueabi gcc-9-aarch64-linux-gnu \
-	gcc-10-aarch64-linux-gnu mtools gcc-9-plugin-dev gcc-10-plugin-dev
-}
-
-bookworm-ccompile(){
-sudo debconf-apt-progress -- apt install -y \
-	build-essential bison bc git dialog patch dosfstools zip unzip parted \
-	debootstrap qemu-user-static rsync kmod cpio flex libssl-dev libncurses5-dev \
-	device-tree-compiler libfdt-dev python3-distutils python3-dev swig fakeroot figlet \
-	lzop lz4 aria2 pv crossbuild-essential-arm64 crossbuild-essential-armhf u-boot-tools \
-	distro-info-data lsb-release libelf-dev fdisk kpartx ccache xz-utils gcc-11 gcc-12 \
-	python-is-python3 python-dev-is-python3 zstd gcc-arm-none-eabi gcc-11-arm-linux-gnueabihf \
-	gcc-11-aarch64-linux-gnu gcc-12-aarch64-linux-gnu gcc-12-arm-linux-gnueabihf \
-	colorized-logs gdisk jq wget btrfs-progs xfsprogs gcc-11-arm-linux-gnueabi \
-	gcc-12-arm-linux-gnueabi crossbuild-essential-armel python3-setuptools \
-	python3-pyelftools curl mtools gcc-11-plugin-dev gcc-12-plugin-dev
+	build-essential bison bc git dialog patch fdisk distro-info-data mmdebstrap \
+	dosfstools zip unzip debootstrap qemu-user-static rsync xfsprogs \
+	kmod cpio flex libssl-dev libncurses5-dev parted fakeroot swig kpartx \
+	aria2 pv lsb-release xz-utils curl e2fsprogs btrfs-progs jq mtools figlet \
+	crossbuild-essential-arm64 crossbuild-essential-armhf crossbuild-essential-armel \
+	gcc-9-arm-linux-gnueabi gcc-10-arm-linux-gnueabi gcc-11-arm-linux-gnueabi \
+	gcc-12-arm-linux-gnueabi gcc-13-arm-linux-gnueabi gcc-14-arm-linux-gnueabi \
+	gcc-9-arm-linux-gnueabihf gcc-10-arm-linux-gnueabihf gcc-11-arm-linux-gnueabihf \
+	gcc-12-arm-linux-gnueabihf gcc-13-arm-linux-gnueabihf gcc-14-arm-linux-gnueabihf \
+	gcc-9-aarch64-linux-gnu gcc-10-aarch64-linux-gnu gcc-11-aarch64-linux-gnu \
+	gcc-12-aarch64-linux-gnu gcc-13-aarch64-linux-gnu gcc-14-aarch64-linux-gnu \
+	gcc-9 gcc-10 gcc-11 gcc-12 gcc-13 gcc-14 debian-archive-keyring debian-keyring make \
+	libelf-dev gcc-9-plugin-dev gcc-10-plugin-dev gcc-11-plugin-dev gcc-12-plugin-dev \
+	gcc-13-plugin-dev gcc-14-plugin-dev ccache
 }
 
 if [[ "$HOST_ARCH" == "aarch64" ]]; then
 	echo -e ""
 	echo -e "You are running: $HOST_ARCH"
 	echo -e "Please run: make ncompile"
-	exit 0
+	exit 1
 fi
 
-if [[ "$HOST_CODENAME" == "bullseye" || "$HOST_CODENAME" == "bookworm" || "$HOST_CODENAME" == "jammy" ]]; then
+if [[ "$HOST_CODENAME" =~ ^(bullseye|bookworm|jammy|noble)$ ]]; then
 	echo ""
 	${HOST_CODENAME}-ccompile
 else
 	echo -e ""
-	echo -e "Something went wrong..?"
-	exit 0
+	echo -e "Something went wrong..? Please report."
+	exit 1
 fi
 
 exit 0
