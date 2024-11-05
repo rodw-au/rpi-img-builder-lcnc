@@ -7,6 +7,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-24.04
+    environment: Test
     steps:
     - name: Install toolchain
       run: |
