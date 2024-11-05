@@ -1,0 +1,30 @@
+name: Build Kernel Package
+
+on:
+  workflow_dispatch:
+  #push:
+    #branches: [ "master" ]
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Install toolchain
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install build-essential curl
+            
+    - name: Clone repository
+     - uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: make ccompile
+
+    - name: Build Pi 5 kernel
+      run: make commit board=bcm2712
+      
+    - name: Archive image artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: Kernel
+        path: |
+            output/bcm2712/*.deb
