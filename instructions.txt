@@ -1,0 +1,33 @@
+# make a development folder to keep the home folder tidy
+cd ~
+mkdir devel
+cd devel
+git clone https://github.com/rodw-au/rpi-img-builder-lcnc
+cd rpi-img-builder-lcnc
+git checkout linuxcnc
+#set up the environment - First run only
+./install.sh
+make ccompile
+
+# Build the kernel, rootfs and image for the raspberry  pi4
+
+make commit board=bcm2711
+make rootfs board=bcm2711
+make image board=bcm2711
+
+# Build the kernel, rootfs and image for the raspberry  pi5
+make commit board=bcm2712
+make rootfs board=bcm2712
+make image board=bcm2712
+
+
+# Hint - ./build-lcnc.sh will run all of the above commands so you can leave it unattended but do sudo su first to keep root permisisons (run as root eg. sudo su)
+# After the first run you generally just need to make the image as the kernel and rootfs won't change
+# the kernel won't change unless Debian Bookworm advances the kernel version AND/OR there is a later PREEMPT_RT patch (using patch-6.1.46.patch released 17-Sep-2023)
+
+#User name and password
+User: cnc
+Password: cnc
+
+# after logging in type
+sudo menu-config to add wifi, change timezone and locale etc

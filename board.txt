@@ -9,28 +9,29 @@ ROOTFS_ARCH="rootfs-${ARCH_EXT}"
 STATIC="qemu-aarch64-static"
 
 # menu
-PRETTY_BOARD="Raspberry Pi ZeroW2/3/4/400/5	BCM2711 / ARM64"
+PRETTY_BOARD="Raspberry Pi 5			BCM2712 / ARM64"
 
 # misc
 FAMILY="broadcom"
 FAMILY_EXT=""
 
 # default config
-LINUX_DEFCONFIG="bcm2711_defconfig"
+LINUX_DEFCONFIG="bcm2712_defconfig"
 
 # partitions
 OFFSET="8192"
 P_VALUE="p2"
 
 # output
-BOARD="bcm2711"
-BOARD_EXT="rpi-4"
+BOARD="bcm2712"
+BOARD_EXT="rpi-5"
 OUTPUT="output/${BOARD}"
 IMG_EXP="${BOARD_EXT}-*.img*"
 
 # cmdline
 CONSOLE="console=serial0,115200 console=tty1"
 EXTRA="loglevel=5 net.ifnames=0 firmware_class.path=/lib/firmware/updates/brcm"
+
 # packaging
-KERNEL_IMG="kernel8.img"
-SERIES="bcm2711-rpi"
+KERNEL_IMG="kernel_2712.img"
+SERIES="bcm2712-rpi"

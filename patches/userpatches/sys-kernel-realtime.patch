@@ -1,0 +1,30 @@
+diff --git a/kernel/ksysfs.c b/kernel/ksysfs.c
+index 1bab21b4718f..831abcee4f31 100644
+--- a/kernel/ksysfs.c
++++ b/kernel/ksysfs.c
+@@ -165,6 +165,15 @@ KERNEL_ATTR_RW(kexec_crash_size);
+ 
+ #ifdef CONFIG_VMCORE_INFO
+ 
++#if defined(CONFIG_PREEMPT_RT)
++static ssize_t realtime_show(struct kobject *kobj,
++                            struct kobj_attribute *attr, char *buf)
++{
++       return sprintf(buf, "%d\n", 1);
++}
++KERNEL_ATTR_RO(realtime);
++#endif
++
+ static ssize_t vmcoreinfo_show(struct kobject *kobj,
+ 			       struct kobj_attribute *attr, char *buf)
+ {
+@@ -285,6 +294,9 @@ static struct attribute * kernel_attrs[] = {
+ #ifndef CONFIG_TINY_RCU
+ 	&rcu_expedited_attr.attr,
+ 	&rcu_normal_attr.attr,
++#endif
++#ifdef CONFIG_PREEMPT_RT
++       &realtime_attr.attr,
+ #endif
+ 	NULL
+ };

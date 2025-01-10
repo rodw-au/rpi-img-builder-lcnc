@@ -1,0 +1,12 @@
+*.img
+*.img.xz
+*.tar.xz
+*.sha256
+*.deb
+source/
+output/
+output/logs/
+files/linuxcnc-dev/
+p1/
+p2/
+sysroot/

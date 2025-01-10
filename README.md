@@ -1,6 +1,19 @@
 <details>
 <summary><h3>Boards</h3></summary>
 
+<<<<<<< HEAD
+### Linuxcnc users
+* Please read and follow steps in instructions.txt
+* This builder creates a kernel from  the Raspberry Pi repositories then
+* Creates a Debian 12 (Bookworm) image ready to burn to a USB stick.
+
+### The boards and distributions that are currently supported
+* **Raspberry Pi 4B/400** (*Debian, Devuan and Ubuntu*)
+* **Raspberry Pi 3/A/B/+** (*Debian, Devuan and Ubuntu*)
+* **Raspberry Pi 2/3/A/B/+** (*Debian, Devuan and Ubuntu*)
+* **Raspberry Pi 0/W/B/+** (*Debian and Devuan*)
+* [Raspberry Pi Hardware](https://www.raspberrypi.org/documentation/hardware/raspberrypi)
+=======
 ```py
 Raspberry Pi Zero/W/1			bcm2708 / ARMEL
 Raspberry Pi ZeroW2/2/3			bcm2709 / ARMHF
@@ -11,8 +24,13 @@ Raspberry Pi 5				bcm2712 / ARM64
 ```
 </details>
 
+<<<<<<< HEAD
+[Raspberry Pi Hardware](https://www.raspberrypi.org/documentation/hardware/raspberrypi)
+>>>>>>> upstream/master
+=======
 * [Raspberry Pi Hardware](https://www.raspberrypi.org/documentation/hardware/raspberrypi)
 * [The config dot txt](https://www.raspberrypi.com/documentation/computers/config_txt.html#what-is-config-txt)
+>>>>>>> upstream/master
 
 ### Host dependencies for Debian Bookworm and Ubuntu Jammy Jellyfish / Noble Numbat
 * **Debian Bookworm** (testing)
